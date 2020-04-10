@@ -1,0 +1,16 @@
+version: "3"
+services:
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - 80:80
+    links:
+      - backend
+    environment:
+      - WS_HOST=backend:8000
+
+  backend:
+    build: ./backend
+    ports:
+      - 8000
