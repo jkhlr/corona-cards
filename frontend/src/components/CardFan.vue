@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div style="height: 100%">
         <draggable
                 :value="cards"
                 @end="endMove"
@@ -76,27 +76,11 @@
     };
 </script>
 <style scoped>
-    .card-stack {
-        display: flex;
-        justify-content: center;
-        background: darkseagreen;
-        height: var(--card-height)
-    }
-
-    .card-stack >>> .card {
-        width: var(--card-width);
-        height: var(--card-height);
-        margin-right: calc(var(--card-width) / -1);
-    }
-
-    .card-stack >>> .card:first-child {
-        margin-left: calc(var(--card-width) / -1);
-    }
-
     .card-fan {
         display: flex;
         justify-content: center;
-        background: darkseagreen;
+        border: thin solid brown;
+        border-radius: 10px;
     }
 
     .card-fan.horizontal {
@@ -116,7 +100,6 @@
 
     .card-fan.vertical {
         flex-direction: column;
-        display: inline-flex;
         width: var(--card-height);
         height: 100%;
     }

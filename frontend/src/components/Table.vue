@@ -1,47 +1,88 @@
 <template>
     <div class="test-table">
-        <div class="container">
-            <card-fan
-                    v-if="state.seats[0]"
-                    :cards="state.seats[0].cards"
-                    ref="seat-0"
-                    orientation="vertical"
-                    @card-move="onCardMove"
-            />
-        </div>
-        <div class="container middle">
-            <card-fan
-                    v-if="state.seats[1]"
-                    :cards="state.seats[1].cards"
-                    ref="seat-1"
-                    orientation="horizontal"
-                    @card-move="onCardMove"
-            />
-            <br>
-            <card-stack
-                    v-if="state.slots[0]"
-                    :cards="state.slots[0].cards"
-                    ref="slot-0"
-                    @card-move="onCardMove"
-            />
-            <br>
-            <card-stack
-                    v-if="state.slots[1]"
-                    :cards="state.slots[1].cards"
-                    ref="slot-1"
-                    @card-move="onCardMove"
-            />
+        <div class="seat-switch" @click="switchSeat">X</div>
+        <card-fan
+                class="bottom-seat"
+                v-if="state.seats[0]"
+                :cards="state.seats[0].cards"
+                ref="seat-0"
+                orientation="horizontal"
+                @card-move="onCardMove"
+        />
+        <card-fan
+                class="left-seat"
+                v-if="state.seats[1]"
+                :cards="state.seats[1].cards"
+                ref="seat-1"
+                orientation="vertical"
+                @card-move="onCardMove"
+        />
 
-        </div>
-        <div class="container right">
-            <card-fan
-                    v-if="state.seats[2]"
-                    :cards="state.seats[2].cards"
-                    ref="seat-2"
-                    orientation="vertical"
-                    @card-move="onCardMove"
-            />
-        </div>
+        <card-fan
+                class="top-seat"
+                v-if="state.seats[2]"
+                :cards="state.seats[2].cards"
+                ref="seat-2"
+                orientation="horizontal"
+                @card-move="onCardMove"
+        />
+        <card-fan
+                class="right-seat"
+                v-if="state.seats[3]"
+                :cards="state.seats[3].cards"
+                ref="seat-3"
+                orientation="vertical"
+                @card-move="onCardMove"
+        />
+        <card-stack
+                class="left-stack"
+                v-if="state.slots[0]"
+                :cards="state.slots[0].cards"
+                ref="slot-0"
+                @card-move="onCardMove"
+        />
+        <card-stack
+                class="right-stack"
+                v-if="state.slots[1]"
+                :cards="state.slots[1].cards"
+                ref="slot-1"
+                @card-move="onCardMove"
+        />
+        <!--        <div class="container">-->
+        <!--           -->
+        <!--        </div>-->
+        <!--        <div class="container middle">-->
+        <!--            <card-fan-->
+        <!--                    v-if="state.seats[1]"-->
+        <!--                    :cards="state.seats[1].cards"-->
+        <!--                    ref="seat-1"-->
+        <!--                    orientation="horizontal"-->
+        <!--                    @card-move="onCardMove"-->
+        <!--            />-->
+        <!--            <br>-->
+        <!--            <card-stack-->
+        <!--                    v-if="state.slots[0]"-->
+        <!--                    :cards="state.slots[0].cards"-->
+        <!--                    ref="slot-0"-->
+        <!--                    @card-move="onCardMove"-->
+        <!--            />-->
+        <!--            <card-stack-->
+        <!--                    v-if="state.slots[1]"-->
+        <!--                    :cards="state.slots[1].cards"-->
+        <!--                    ref="slot-1"-->
+        <!--                    @card-move="onCardMove"-->
+        <!--            />-->
+
+        <!--        </div>-->
+        <!--        <div class="container right">-->
+        <!--            <card-fan-->
+        <!--                    v-if="state.seats[2]"-->
+        <!--                    :cards="state.seats[2].cards"-->
+        <!--                    ref="seat-2"-->
+        <!--                    orientation="vertical"-->
+        <!--                    @card-move="onCardMove"-->
+        <!--            />-->
+        <!--        </div>-->
     </div>
 </template>
 
@@ -58,7 +99,8 @@
                     slots: []
                 },
                 playerName: '',
-                requestingMove: false
+                requestingMove: false,
+                currentSeat: null
             }
         },
         sockets: {
@@ -142,6 +184,18 @@
                     }
                 }
                 throw new TypeError(`Component has no ref slug: ${component}`)
+            },
+            switchSeat() {
+                if (this.currentSeat === null) {
+                    this.currentSeat = 0
+                } else {
+                    this.currentSeat = ((this.currentSeat + 1) % 4)
+                }
+            }
+        },
+        watch: {
+            currentSeat() {
+                this.takeSeat(this.currentSeat)
             }
         },
         created() {
@@ -158,13 +212,73 @@
 <style scoped>
     .test-table {
         height: 100%;
-        display: flex;
+        background: darkseagreen;
+        padding: 10px;
+        box-sizing: border-box;
+
+        display: grid;
+        grid-template-columns: var(--card-height) 1fr 1fr var(--card-height);
+        grid-template-rows: var(--card-height) 1fr var(--card-height);
+        align-items: center;
+        column-gap: 10px;
+        row-gap: 10px;
+
         --card-width: 60px;
         --card-height: 100px;
     }
 
+    .seat-switch {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+    }
+
+    .left-seat {
+        grid-column-start: 1;
+        grid-column-end: 2;
+        grid-row-start: 1;
+        grid-row-end: 4;
+    }
+
+    .right-seat {
+        grid-column-start: 4;
+        grid-column-end: 5;
+        grid-row-start: 1;
+        grid-row-end: 4;
+    }
+
+    .top-seat {
+        grid-column-start: 2;
+        grid-column-end: 4;
+        grid-row-start: 1;
+        grid-row-end: 2;
+    }
+
+    .bottom-seat {
+        grid-column-start: 2;
+        grid-column-end: 4;
+        grid-row-start: 3;
+        grid-row-end: 4;
+    }
+
+    .left-stack {
+        grid-column-start: 2;
+        grid-column-end: 3;
+        grid-row-start: 2;
+        grid-row-end: 3;
+    }
+
+    .right-stack {
+        grid-column-start: 3;
+        grid-column-end: 4;
+        grid-row-start: 2;
+        grid-row-end: 3;
+    }
+
+
     .container {
         display: flex;
+
         box-sizing: border-box;
         background: lightgrey;
         border: thin solid black;

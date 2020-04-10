@@ -43,20 +43,29 @@ const SKAT_GAME = () => {
 const TEST_GAME = () => {
     const cards = SKAT_CARDS();
     const seats = [
-        {cards: cards.slice(0, 10)},
-        {cards: cards.slice(10, 20)},
-        {cards: cards.slice(20, 30)}
+        {
+            cards: []
+        },
+        {
+            cards: []
+        },
+        {
+            cards: []
+        },
+        {
+            cards: []
+        }
     ];
     const slots = [
         {
             type: 'closed',
             maxCards: null,
-            cards: []
+            cards: cards
         },
         {
             type: 'open',
             maxCards: null,
-            cards: cards.slice(30, 32)
+            cards: []
         }
     ];
     return {seats, slots};

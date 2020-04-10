@@ -4,7 +4,7 @@ services:
     build:
       context: ./frontend
     ports:
-      - 80:80
+      - 8002:80
     links:
       - backend
     environment:

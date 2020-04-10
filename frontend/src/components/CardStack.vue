@@ -56,7 +56,6 @@
     .card-stack {
         display: flex;
         justify-content: center;
-        background: darkseagreen;
         height: var(--card-height)
     }
 
