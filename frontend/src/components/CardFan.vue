@@ -30,24 +30,29 @@
         name: "CardFan",
         mixins: [CardContainer],
         props: {
-            cards: {
-                type: Array,
+            name: {
+                type: String,
                 required: true
-            },
-            maxCards: {
-                type: Number
             },
             orientation: {
                 type: String,
                 default: 'horizontal'
             },
+            // TODO: remove
+            cards: {
+                type: Array,
+                required: true
+            },
             canMove: {
                 type: String,
                 default: 'all'
-            }
+            },
+            maxCards: {
+                type: Number
+            },
         },
         methods: {
-            canMoveCardAt(card, index) {
+            canMoveCardTo(card, index) {
                 if(this.canMove === 'all') {
                     return true
                 }

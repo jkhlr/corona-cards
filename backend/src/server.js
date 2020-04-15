@@ -28,9 +28,20 @@ const SKAT_CARDS = () => {
     return SUITS.flatMap(suit => NUMBERS.slice(5).map(number => ({face: number + suit, id: i++})));
 };
 
-const SKAT_GAME = () => {
-    return getInitialGameState(
+const SKAT_GAME = () =>
+    getInitialGameState(
         3,
+        [
+            {type: 'closed', maxCards: null},
+            {type: 'open', maxCards: null}
+        ],
+        'skat',
+        true
+    );
+
+const UNO_GAME = () =>
+    getInitialGameState(
+        4,
         [
             {type: 'closed', maxCards: null},
             {type: 'open', maxCards: null}
@@ -38,39 +49,6 @@ const SKAT_GAME = () => {
         'skat',
         false
     );
-};
-
-const TEST_GAME = () => {
-    const cards = SKAT_CARDS();
-    const seats = [
-        {
-            cards: []
-        },
-        {
-            cards: []
-        },
-        {
-            cards: []
-        },
-        {
-            cards: []
-        }
-    ];
-    const slots = [
-        {
-            type: 'closed',
-            maxCards: null,
-            cards: cards
-        },
-        {
-            type: 'open',
-            maxCards: null,
-            cards: []
-        }
-    ];
-    return {seats, slots};
-};
-
 
 function getInitialGameState(numSeats, slotDescriptions, cardType, shuffle) {
     const seats = Array(numSeats).fill(null).map(() => ({cards: []}));
@@ -94,37 +72,33 @@ function getInitialGameState(numSeats, slotDescriptions, cardType, shuffle) {
 }
 
 function validateMoveRequest(moveRequest, state) {
-    const [command, ...args] = moveRequest.split(' ');
-
-    let move;
-    if (command === 'move') {
-        const [cardsString, fromString, toString, newIndex] = args;
-        if (!(cardsString && fromString && toString)) {
-            throw new ValidationError(`Invalid Move Request: ${moveRequest}`)
-        }
-        let from = {};
-        [from.type, from.number] = fromString.split('-');
-        let to = {};
-        [to.type, to.number] = toString.split('-');
-        const cardIds = [...new Set(cardsString.split(','))].map(idString => parseInt(idString));
-        const newIndexInt = newIndex === undefined ? null : parseInt(newIndex);
-        move = new MoveCards(cardIds, from, to, newIndexInt)
-    } else {
-        throw new ValidationError(`Invalid command: ${command}`)
+    const move = parseMove(moveRequest);
+    if (move.isValid(state)) {
+        return move
     }
-
-    if (!move.isValid(state)) {
-        throw new ValidationError(`Invalid Move: ${move}`)
-    }
-    return move
+    throw new ValidationError(`Invalid move`)
 }
 
-let gameState = TEST_GAME();
+function parseMove(moveRequest) {
+    if (moveRequest.command === 'move') {
+        const cards = moveRequest.args.cards.map(card => card.id);
+        const from = moveRequest.args.from;
+        const to = moveRequest.args.to;
+        const at = moveRequest.args.at;
+        return new MoveCards(cards, from, to, at)
+    } else {
+        throw new ValidationError(`Invalid command: ${moveRequest.command}`)
+    }
+}
+
+let gameState = UNO_GAME();
+let moveHistory = [];
 
 const seatMap = new Map();
 
 function getGameStateFor(socket) {
-    const seatNumber = seatMap.get(socket.id);
+    // TODO: history might leak redacted game state through move description!
+    const seatNumber = seatMap.get(socket.id).seatNumber;
     const redactedState = cloneState(gameState);
     for (let [i, seat] of redactedState.seats.entries()) {
         if (i !== seatNumber) {
@@ -141,33 +115,44 @@ function getGameStateFor(socket) {
 
 io.on('connection', (socket) => {
     console.log(`Socket ${socket.id} connected`);
+    seatMap.set(socket.id, {seatNumber: null, name: null});
 
     socket.on('disconnect', () => {
         console.log(`Socket ${socket.id} disconnected`);
+        seatMap.delete(socket.id)
     });
 
     socket.on('getState', () => {
-        socket.emit('stateUpdate', {state: getGameStateFor(socket)});
+        socket.emit('stateUpdate', {gameState: getGameStateFor(socket), moveHistory});
     });
 
     socket.on('takeSeat', (seatNumber) => {
-        seatMap.set(socket.id, seatNumber);
-        socket.emit('stateUpdate', {state: getGameStateFor(socket)});
+        seatMap.set(socket.id, {...seatMap.get(socket.id), seatNumber});
+        socket.emit('stateUpdate', {gameState: getGameStateFor(socket), moveHistory});
+    });
+
+    socket.on('setName', (name) => {
+        seatMap.set(socket.id, {...seatMap.get(socket.id), name});
+        socket.emit('stateUpdate', {gameState: getGameStateFor(socket), moveHistory});
     });
 
     socket.on('requestMove', (moveRequest) => {
-        console.log(`Requested move by Socket ${socket.id}: ${moveRequest}`);
+        console.log(`Requested move by socket ${socket.id}:`);
+        console.log(moveRequest);
 
         try {
             const move = validateMoveRequest(moveRequest, gameState);
             gameState = move.apply(gameState);
-
-            const moveResponse = move.serialize();
-            socket.emit('confirmMove', {move: moveResponse, state: getGameStateFor(socket)});
-            socket.broadcast.emit('remoteMove');
+            moveHistory = [...moveHistory, moveRequest];
+            socket.emit('confirmMove', {move: moveRequest, gameState: getGameStateFor(socket), moveHistory});
+            Object.values(io.sockets.connected)
+                .filter(otherSocket => otherSocket.id !== socket.id)
+                .forEach(otherSocket =>
+                    otherSocket.emit('remoteMove', {move: moveRequest, gameState: getGameStateFor(otherSocket), moveHistory})
+                );
         } catch (err) {
             if (err instanceof ValidationError) {
-                socket.emit('rejectMove', {error: err.message, state: getGameStateFor(socket)});
+                socket.emit('rejectMove', {move: moveRequest, error: err.message, gameState: getGameStateFor(socket), moveHistory});
             } else {
                 throw err
             }

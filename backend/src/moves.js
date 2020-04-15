@@ -25,13 +25,6 @@ class MoveCards {
         const table = new Table(state.seats, state.slots);
         return table.canMoveCards(this.cardIds, this.from, this.to, this.index);
     }
-
-    serialize() {
-        const cards = `card${this.cardIds.length > 1 ? 's' : ''} ${this.cardIds.join(', ')}`;
-        const from = `${this.from.type}-${this.from.number}`;
-        const to = `${this.to.type}-${this.to.number}`;
-        return `Move ${cards} from ${from} to ${to}`
-    }
 }
 
 
@@ -45,31 +38,31 @@ class Table {
         let from;
         if (fromType === 'seat') {
             if (fromNumber >= this.seats.length) {
-                throw new TypeError(`Invalid from: ${fromType} ${fromNumber}`)
+                throw new TypeError(`Invalid from: {type: ${fromType}, number: ${fromNumber}}`)
             }
             from = this.seats[fromNumber];
         } else if (fromType === 'slot') {
             if (fromNumber >= this.slots.length) {
-                throw new TypeError(`Invalid from: ${fromType} ${fromNumber}`)
+                throw new TypeError(`Invalid from: {type: ${fromType}, number: ${fromNumber}}`)
             }
             from = this.slots[fromNumber];
         } else {
-            throw new TypeError(`Invalid fromType: ${fromType}`)
+            throw new TypeError(`Invalid from.type: ${fromType}`)
         }
 
         let to;
         if (toType === 'seat') {
             if (toNumber >= this.seats.length) {
-                throw new TypeError(`Invalid to: ${toType} ${toNumber}`)
+                throw new TypeError(`Invalid to: {type: ${toType}, number: ${toNumber}}`)
             }
             to = this.seats[toNumber]
         } else if (toType === 'slot') {
             if (toNumber >= this.slots.length) {
-                throw new TypeError(`Invalid to: ${toType} ${toNumber}`)
+                throw new TypeError(`Invalid to: {type: ${toType}, number: ${toNumber}}`)
             }
             to = this.slots[toNumber]
         } else {
-            throw new TypeError(`Invalid toType: ${toType}`)
+            throw new TypeError(`Invalid to.type: ${toType}`)
         }
 
         return from.canRemoveCards(cardIds) && to.canAddCardsAt(cardIds, index)

@@ -10,15 +10,16 @@ export default {
             const from = fromElem.__vue__.$parent;
             const to = toElem.__vue__.$parent;
             const card = cardElem.__vue__;
+
             if (from === to) {
-                return to.canMoveCardAt(card, index)
+                return to.canMoveCardTo(card, index)
             }
             return to.canAddCardAt(card, index);
         },
         canAddCardAt() {
             return true
         },
-        canMoveCardAt() {
+        canMoveCardTo() {
             return true
         }
 

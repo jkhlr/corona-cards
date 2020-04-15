@@ -27,6 +27,11 @@
         name: "CardStack",
         mixins: [CardContainer],
         props: {
+            name: {
+                type: String,
+                required: true
+            },
+            // TODO: remove
             cards: {
                 type: Array,
                 required: true
@@ -36,7 +41,7 @@
             }
         },
         methods: {
-            canMoveCardAt(card, index) {
+            canMoveCarTo(card, index) {
                 return index === this.cards.length - 1
             },
             canAddCardAt(card, index) {
