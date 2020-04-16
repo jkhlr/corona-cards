@@ -1,11 +1,24 @@
 {
-  "name": "cards-frontend",
-  "version": "0.1.0",
+  "name": "corona-cards.net",
+  "version": "0.0.1",
   "private": true,
-  "description": "a digital card deck (frontend)",
+  "description": "A digital card deck for the socially distanced",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build"
+  },
+  "dependencies": {
+    "vue": "^2.6.11",
+    "vue-router": "^3.1.5",
+    "vue-socket.io": "^3.0.7",
+    "vuedraggable": "^2.23.2",
+    "vuex": "^3.1.3"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~4.2.0",
+    "@vue/cli-plugin-router": "~4.2.0",
+    "@vue/cli-service": "~4.2.0",
+    "vue-template-compiler": "^2.6.11"
   },
   "vue": {
     "devServer": {
@@ -28,18 +41,5 @@
   "browserslist": [
     "> 1%",
     "last 2 versions"
-  ],
-  "dependencies": {
-    "vue": "^2.6.11",
-    "vue-router": "^3.1.5",
-    "vue-socket.io": "^3.0.7",
-    "vuedraggable": "^2.23.2",
-    "vuex": "^3.1.3"
-  },
-  "devDependencies": {
-    "@vue/cli-plugin-babel": "~4.2.0",
-    "@vue/cli-plugin-router": "~4.2.0",
-    "@vue/cli-service": "~4.2.0",
-    "vue-template-compiler": "^2.6.11"
-  }
+  ]
 }

@@ -1,7 +1,7 @@
 import express from 'express'
 import http from 'http'
 import socketio from 'socket.io'
-import {MoveCards} from "./commands";
+import {MoveCard} from "./commands";
 import {ValidationError} from "./utils";
 
 const app = express();
@@ -96,7 +96,7 @@ function parseMove(moveRequest) {
         const fromSlug = moveRequest.args.fromSlug;
         const toSlug = moveRequest.args.toSlug;
         const newIndex = moveRequest.args.newIndex;
-        return new MoveCards([cardId], fromSlug, toSlug, newIndex)
+        return new MoveCard(cardId, fromSlug, toSlug, newIndex)
     } else {
         throw new ValidationError(`Invalid command: ${moveRequest.command}`)
     }

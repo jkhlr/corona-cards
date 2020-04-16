@@ -1,7 +1,7 @@
 import Vue from "vue";
 import Vuex from 'vuex'
 import socket from './socket'
-import {MoveCards} from "./shared/commands";
+import {MoveCard} from "./shared/commands";
 
 Vue.use(Vuex);
 
@@ -46,7 +46,7 @@ export default new Vuex.Store({
         },
         checkMove(state) {
             return ({cardId, fromSlug, toSlug, newIndex}) => {
-                const command = new MoveCards([cardId], fromSlug, toSlug, newIndex);
+                const command = new MoveCard(cardId, fromSlug, toSlug, newIndex);
                 return command.isValid(state.gameState)
             }
         }
@@ -57,7 +57,7 @@ export default new Vuex.Store({
             state.moveHistory = moveHistory;
         },
         moveCard(state, {cardId, fromSlug, toSlug, newIndex}) {
-            const command = new MoveCards([cardId], fromSlug, toSlug, newIndex);
+            const command = new MoveCard(cardId, fromSlug, toSlug, newIndex);
             state.gameState = command.apply(state.gameState);
 
             socket.emit('requestMove', {

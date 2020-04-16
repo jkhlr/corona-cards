@@ -1,8 +1,8 @@
 import {Table} from "./table";
 
-class MoveCards {
-    constructor(cardIds, fromSlug, toSlug, newIndex) {
-        this.cardIds = cardIds;
+class MoveCard {
+    constructor(cardId, fromSlug, toSlug, newIndex) {
+        this.cardId = cardId;
         this.fromSlug = fromSlug;
         this.toSlug = toSlug;
         this.newIndex = newIndex
@@ -10,17 +10,17 @@ class MoveCards {
 
     apply(gameState) {
         const table = new Table(gameState);
-        table.moveCards(this.cardIds, this.fromSlug, this.toSlug, this.newIndex);
+        table.moveCard(this.cardId, this.fromSlug, this.toSlug, this.newIndex);
         const cards = table.getCards();
         return {...gameState, cards}
     }
 
     isValid(gameState) {
         const table = new Table(gameState);
-        return table.canMoveCards(this.cardIds, this.fromSlug, this.toSlug, this.newIndex);
+        return table.canMoveCard(this.cardId, this.fromSlug, this.toSlug, this.newIndex);
     }
 }
 
-export {MoveCards}
+export {MoveCard}
 
 

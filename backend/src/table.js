@@ -2,30 +2,23 @@ class Table {
     constructor(gameState) {
         this.cardContainers = Object.fromEntries(
             Object.keys(gameState.config).map(
-                (key) => {
-                    if (key.startsWith('seat-')) {
-                        return [key, new Seat(gameState.cards[key])]
-                    } else if (key.startsWith('slot-')) {
-                        return [key, new Slot(gameState.cards[key], gameState.config[key].maxCards)]
-                    } else {
-                        throw TypeError(`Invalid key: ${key}`)
-                    }
-                }
+                (key) =>
+                    [key, new CardContainer(gameState.cards[key], gameState.config[key])]
             )
         );
     }
 
-    canMoveCards(cardIds, fromSlug, toSlug, index) {
+    canMoveCard(cardId, fromSlug, toSlug, index) {
         const from = this.cardContainers[fromSlug];
         const to = this.cardContainers[toSlug];
-        return from.canRemoveCards(cardIds) && to.canAddCardsAt(cardIds, index)
+        return from.canRemoveCard(cardId) && to.canAddCardAt(index)
     }
 
-    moveCards(cardIds, fromSlug, toSlug, index) {
+    moveCard(cardId, fromSlug, toSlug, index) {
         const from = this.cardContainers[fromSlug];
         const to = this.cardContainers[toSlug];
-        const movingCards = from.removeCards(cardIds);
-        to.addCardsAt(movingCards, index);
+        const movingCard = from.removeCard(cardId);
+        to.addCardAt(movingCard, index);
     }
 
     getCards() {
@@ -38,70 +31,62 @@ class Table {
     }
 }
 
-class AbstractCardContainer {
-    constructor(cards) {
+class CardContainer {
+    constructor(cards, config) {
         this.cards = cards;
-        this.cardIdMap = new Map(cards.map(card => [card.id, card]));
+        this.config = config;
     }
 
-    removeCards(cardIds) {
-        const movingCards = cardIds.map(id => this.cardIdMap.get(id));
-        this.cards = this.cards.filter(card => !cardIds.includes(card.id));
-        return movingCards
+    get cardIdMap() {
+        return new Map(this.cards.map(card => [card.id, card]));
     }
 
-    addCardsAt(cards, index) {
+    get indexIdMap() {
+        let i = 0;
+        return new Map(this.cards.map((card) => [card.id, i++]));
+    }
+
+    removeCard(cardId) {
+        const movingCard = this.cardIdMap.get(cardId);
+        console.log(movingCard);
+        this.cards = this.cards.filter(card => card.id !== cardId);
+        return movingCard
+    }
+
+    addCardAt(card, index) {
         if (index === null || index > this.cards.length) {
             index = this.cards.length
         }
         if (index < 0) {
             index = 0
         }
-        this.cards = this.cards.slice(0, index).concat(cards).concat(this.cards.slice(index));
-    }
-}
-
-// A seat is a collection of cards, where cards can be removed and added everywhere.
-// It has no maximum capacity.
-// Can be used for a players hand
-class Seat extends AbstractCardContainer {
-    canRemoveCards(cardIds) {
-        return cardIds.every(cardId => this.cardIdMap.has(cardId))
+        this.cards = this.cards.slice(0, index).concat([card]).concat(this.cards.slice(index));
     }
 
-    canAddCardsAt() {
-        return true
-    }
-}
-
-// A slot behaves like a seat, but cards can only be added and removed at the end.
-// It can also have a maximum capacity.
-// Can be used as a stack, with non-top cards visible or hidden.
-class Slot extends AbstractCardContainer {
-    constructor(cards, maxCards) {
-        super(cards);
-        this.maxCards = maxCards;
-    }
-
-    canRemoveCards(cardIds) {
-        if (cardIds.length > this.cards.length) {
-            return false
+    canRemoveCard(cardId) {
+        if (this.config.canMove === 'all') {
+            return this.cardIdMap.has(cardId)
         }
-        const candidateCardIds = this.cards.slice(this.cards.length - cardIds.length).map(card => card.id);
-        return cardIds.every(cardId => candidateCardIds.includes(cardId));
+        if (this.config.canMove === 'last') {
+            return this.indexIdMap.get(cardId) === this.cards.length - 1
+        }
+        return false
     }
 
-    canAddCardsAt(cards, index) {
+    canAddCardAt(index) {
         if (index === null || index > this.cards.length) {
             index = this.cards.length
         }
         if (index < 0) {
             index = 0
         }
-        if (index !== this.cards.length) {
+        if (this.config.canMove === 'last' && index !== this.cards.length) {
             return false
         }
-        return this.maxCards === null || this.cards.length + cards.length <= this.maxCards
+        if (this.config.canMove !== 'last' && this.config.canMove !== 'all') {
+            return false
+        }
+        return this.config.maxCards === null || this.cards.length < this.config.maxCards
     }
 }
 

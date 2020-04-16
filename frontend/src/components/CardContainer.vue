@@ -37,22 +37,25 @@
                     return true
                 }
                 if (this.config.canMove === 'last') {
-                  return index === this.cards.length - 1
+                    return index === this.cards.length - 1
                 }
                 return false
             },
-            endDrag({from: fromElem, to: toElem, item: cardElem, newIndex, oldIndex}) {
-                const fromSlug = fromElem.__vue__.$parent.name;
-                const toSlug = toElem.__vue__.$parent.name;
-                const cardId = cardElem.__vue__.id;
+            endDrag({from, to, item, oldIndex, newIndex}) {
+                const fromSlug = from.__vue__.$parent.name;
+                const toSlug = to.__vue__.$parent.name;
+                const cardId = item.__vue__.id;
                 if (fromSlug !== toSlug || oldIndex !== newIndex) {
                     this.$store.commit('moveCard', {cardId, fromSlug, toSlug, newIndex});
                 }
             },
-            checkDrag({from: fromElem, to: toElem, dragged: cardElem, draggedContext: {futureIndex: newIndex}}) {
-                const fromSlug = fromElem.__vue__.$parent.name;
-                const toSlug = toElem.__vue__.$parent.name;
-                const cardId = cardElem.__vue__.id;
+            checkDrag({from, to, dragged, draggedContext: {index: oldIndex, futureIndex: newIndex}}) {
+                const fromSlug = from.__vue__.$parent.name;
+                const toSlug = to.__vue__.$parent.name;
+                const cardId = dragged.__vue__.id;
+                if (fromSlug === toSlug && oldIndex === newIndex) {
+                    return true
+                }
                 return this.$store.getters.checkMove({cardId, fromSlug, toSlug, newIndex});
             },
             clickCard(cardId) {

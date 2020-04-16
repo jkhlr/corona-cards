@@ -32,36 +32,44 @@
         },
         computed: {
             seatConfig() {
-                const cards = Object.fromEntries(Object.entries(this.gameState.cards).filter(([key]) => key.startsWith('seat-')));
-                if (Object.keys(cards).length === 4) {
-                    return [
-                        {
-                            cards: cards['seat-0'],
-                            name: 'seat-0',
-                            position: 'bottom',
-                            orientation: 'horizontal'
-                        },
-                        {
-                            cards: cards['seat-1'],
-                            name: 'seat-1',
-                            position: 'left',
-                            orientation: 'vertical'
-                        },
-                        {
-                            cards: cards['seat-2'],
-                            name: 'seat-2',
-                            position: 'top',
-                            orientation: 'horizontal'
-                        },
-                        {
-                            cards: cards['seat-3'],
-                            name: 'seat-3',
-                            position: 'right',
-                            orientation: 'vertical'
-                        },
-                    ]
+                if (this.numSeats > 4) {
+                    throw TypeError(`Invalid number of seats: ${this.numSeats}`)
                 }
-                return []
+
+                let seatSlugs = Object.keys(this.gameState.cards).filter(key => key.startsWith('seat-'));
+                if (this.currentSeatNumber !== null) {
+                    const currentSeatSlug = `seat-${this.currentSeatNumber}`;
+                    const currentSeatSlugIndex = seatSlugs.indexOf(currentSeatSlug);
+                    seatSlugs = seatSlugs.slice(currentSeatSlugIndex).concat(seatSlugs.slice(0, currentSeatSlugIndex));
+                }
+
+                const seatOrientations = [
+                    {
+                        position: 'bottom',
+                        orientation: 'horizontal'
+                    },
+                    {
+                        position: 'left',
+                        orientation: 'vertical'
+                    },
+                    {
+                        position: 'top',
+                        orientation: 'horizontal'
+                    },
+                    {
+                        position: 'right',
+                        orientation: 'vertical'
+                    }
+                ];
+
+                const cards = seatSlugs.map(slug => this.gameState.cards[slug]);
+                return seatSlugs.map(
+                    (slug, i) => ({
+                        name: slug,
+                        cards: cards[i],
+                        ...seatOrientations[i]
+                    })
+                );
             },
             slotConfig() {
                 const cards = Object.fromEntries(Object.entries(this.gameState.cards).filter(([key]) => key.startsWith('slot-')));
@@ -88,24 +96,28 @@
             ...mapGetters([
                 'numSeats'
             ])
-        },
+        }
+        ,
         sockets: {
             stateUpdate({gameState, moveHistory}) {
                 if (!this.requestingMove) {
                     this.updateState({gameState, moveHistory})
                 }
-            },
+            }
+            ,
             confirmMove({move, gameState, moveHistory}) {
                 console.log(`Move confirmed:`);
                 console.log(move);
                 this.requestingMove = false;
                 this.updateState({gameState, moveHistory})
-            },
+            }
+            ,
             rejectMove({error, gameState, moveHistory}) {
                 console.log(`Move Request rejected: ${error}`);
                 this.requestingMove = false;
                 this.updateState({gameState, moveHistory})
-            },
+            }
+            ,
             remoteMove({move, gameState, moveHistory}) {
                 console.log('Remote move:');
                 console.log(move);
@@ -113,36 +125,44 @@
                     this.updateState({gameState, moveHistory})
                 }
             }
-        },
+        }
+        ,
         methods: {
             getState() {
                 console.log('State update requested');
                 this.$socket.emit('getState');
-            },
+            }
+            ,
             setName(name) {
                 console.log(`Name ${name} set`);
                 this.$socket.emit('setName', name);
-            },
+            }
+            ,
             switchSeat() {
                 if (this.currentSeatNumber === null) {
                     this.takeSeat({seatNumber: 0})
                 } else {
                     this.takeSeat({seatNumber: (this.currentSeatNumber + 1) % this.numSeats});
                 }
-            },
-            ...mapMutations([
-                'updateState',
-                'takeSeat'
-            ])
-        },
+            }
+            ,
+            ...
+                mapMutations([
+                    'updateState',
+                    'takeSeat'
+                ])
+        }
+        ,
         watch: {
             playerName() {
                 this.setName(this.playerName)
             }
-        },
+        }
+        ,
         created() {
             this.$socket.emit('getState');
-        },
+        }
+        ,
         components: {
             CardStack,
             CardFan

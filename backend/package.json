@@ -1,12 +1,23 @@
 {
-  "name": "cards-backend",
+  "name": "corona-cards.net",
   "version": "0.0.1",
   "private": true,
-  "description": "a digital card deck (backend)",
+  "description": "A digital card deck for the socially distanced",
   "scripts": {
     "start": "npm run build && node dist/server.js",
     "start:dev": "nodemon --exec babel-node src/server.js",
     "build": "babel src -d dist --source-maps --copy-files"
+  },
+  "dependencies": {
+    "express": "^4.15.2",
+    "socket.io": "^2.3.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.0",
+    "@babel/node": "^7.8.7",
+    "@babel/preset-env": "^7.9.0",
+    "nodemon": "^2.0.2"
   },
   "babel": {
     "presets": [
@@ -19,16 +30,5 @@
         }
       ]
     ]
-  },
-  "dependencies": {
-    "express": "^4.15.2",
-    "socket.io": "^2.3.0"
-  },
-  "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.9.0",
-    "@babel/node": "^7.8.7",
-    "@babel/preset-env": "^7.9.0",
-    "nodemon": "^2.0.2"
   }
 }
