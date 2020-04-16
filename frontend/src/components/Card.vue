@@ -1,5 +1,5 @@
 <template>
-    <div class="card">
+    <div class="card" @click="onClick" :class="{highlighted: isHighlighted}">
         <img :src="imagePath" :alt="altText"/>
     </div>
 </template>
@@ -15,8 +15,11 @@
             suit() {
                 return this.face.charAt(this.face.length - 1)
             },
+            isHighlighted() {
+                return this.$store.getters.lastMoveCardId === this.id;
+            },
             altText() {
-                if(this.face === '*') {
+                if (this.face === '*') {
                     return '*'
                 }
                 return `${this.rank}${this.suit}`
@@ -30,7 +33,12 @@
                 }
                 return require(`@/assets/cards/${this.rank}${this.suit}.png`)
             }
-        }
+        },
+        methods: {
+            onClick() {
+                this.$emit('click', this.id);
+            }
+        },
     };
 </script>
 
@@ -38,11 +46,19 @@
     .card {
         flex-shrink: 0;
         position: relative;
+        border-radius: 5px;
+        background: white;
+        box-sizing: border-box;
     }
 
     .card img {
         display: block;
         width: var(--card-width);
         height: var(--card-height);
+    }
+
+    .card.highlighted {
+        box-shadow: 0 0 5px 1px brown;
+        background: brown
     }
 </style>

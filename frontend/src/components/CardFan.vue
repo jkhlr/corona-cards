@@ -1,34 +1,18 @@
 <template>
-    <div style="height: 100%">
-        <draggable
-                :value="cards"
-                @end="endMove"
-                :move="checkMove"
-                group="cards"
-                filter=".non-movable"
+    <div style="height: 100%; width: 100%">
+        <card-container
                 class="card-fan"
-                :class="orientation"
-        >
-            <card
-                    v-for="(card, i) in cards"
-                    v-bind="card"
-                    :class="{
-                        'non-movable': canMove !== 'all' && (canMove !== 'last' || cards.length - i > 1)
-                    }"
-                    :key="card.id"
-            />
-        </draggable>
+                :class="{highlighted: isHighlighted, [orientation]: true}"
+                :name="name"
+        />
     </div>
 </template>
 
 <script>
-    import draggable from 'vuedraggable';
-    import Card from "@/components/Card";
-    import CardContainer from '@/components/mixins/CardContainer'
+    import CardContainer from "@/components/CardContainer";
 
     export default {
         name: "CardFan",
-        mixins: [CardContainer],
         props: {
             name: {
                 type: String,
@@ -37,46 +21,15 @@
             orientation: {
                 type: String,
                 default: 'horizontal'
-            },
-            // TODO: remove
-            cards: {
-                type: Array,
-                required: true
-            },
-            canMove: {
-                type: String,
-                default: 'all'
-            },
-            maxCards: {
-                type: Number
-            },
+            }
         },
-        methods: {
-            canMoveCardTo(card, index) {
-                if(this.canMove === 'all') {
-                    return true
-                }
-                if(this.canMove === 'last') {
-                    return index === this.cards.length - 1
-                }
-                return false
-            },
-            canAddCardAt(card, index) {
-                if (this.maxCards !== undefined && this.cards.length >= this.maxCards) {
-                    return false
-                }
-                if (this.canMove === 'all') {
-                    return true
-                }
-                if(this.canMove === 'last') {
-                    return index === this.cards.length
-                }
-                return false
-            },
+        computed: {
+            isHighlighted() {
+                return this.$store.getters.lastMoveFromSlug === this.name
+            }
         },
         components: {
-            draggable,
-            Card
+            CardContainer
         }
     };
 </script>
@@ -84,13 +37,22 @@
     .card-fan {
         display: flex;
         justify-content: center;
-        border: thin solid brown;
-        border-radius: 10px;
+
+        border-radius: 5px;
+        border: var(--card-container-border) solid white;
+        padding: var(--card-container-padding);
+
+        box-sizing: border-box;
+    }
+
+    .card-fan.highlighted {
+        box-shadow: 0 0 5px 1px brown
     }
 
     .card-fan.horizontal {
+        flex-direction: row;
         width: 100%;
-        height: var(--card-height)
+        height: var(--card-container-height);
     }
 
     .card-fan.horizontal >>> .card {
@@ -105,7 +67,7 @@
 
     .card-fan.vertical {
         flex-direction: column;
-        width: var(--card-height);
+        width: var(--card-container-height);
         height: 100%;
     }
 

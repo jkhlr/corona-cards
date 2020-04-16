@@ -1,59 +1,32 @@
 <template>
     <div>
-        <draggable
-                :value="cards"
-                @end="endMove"
-                :move="checkMove"
-                group="cards"
-                filter=".non-movable"
+        <card-container
                 class="card-stack"
+                :class="{highlighted: isHighlighted}"
+                :name="name"
         >
-            <card
-                    v-for="(card, i) in cards"
-                    v-bind="card"
-                    :class="{'non-movable': cards.length - i > 1}"
-                    :key="card.id"
-            />
-        </draggable>
+        </card-container>
     </div>
 </template>
 
 <script>
-    import draggable from 'vuedraggable';
-    import Card from "@/components/Card";
-    import CardContainer from '@/components/mixins/CardContainer'
+    import CardContainer from "@/components/CardContainer";
 
     export default {
         name: "CardStack",
-        mixins: [CardContainer],
         props: {
             name: {
                 type: String,
                 required: true
-            },
-            // TODO: remove
-            cards: {
-                type: Array,
-                required: true
-            },
-            maxCards: {
-                type: Number
             }
         },
-        methods: {
-            canMoveCarTo(card, index) {
-                return index === this.cards.length - 1
-            },
-            canAddCardAt(card, index) {
-                if (index === this.cards.length) {
-                    return this.maxCards === undefined || index < this.maxCards
-                }
-                return false
+        computed: {
+            isHighlighted() {
+                return this.$store.getters.lastMoveFromSlug === this.name
             }
         },
         components: {
-            draggable,
-            Card
+            CardContainer
         }
     };
 </script>
@@ -61,7 +34,18 @@
     .card-stack {
         display: flex;
         justify-content: center;
-        height: var(--card-height)
+
+        border-radius: 5px;
+        border: var(--card-container-border) solid white;
+        padding: var(--card-container-padding);
+
+        box-sizing: border-box;
+        height: var(--card-container-height);
+        width: var(--card-container-width);
+    }
+
+    .card-stack.highlighted {
+        box-shadow: 0 0 5px 1px brown;
     }
 
     .card-stack >>> .card {

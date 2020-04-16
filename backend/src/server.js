@@ -1,8 +1,8 @@
 import express from 'express'
 import http from 'http'
 import socketio from 'socket.io'
-import {MoveCards} from "./moves";
-import {cloneState, ValidationError} from "./utils";
+import {MoveCards} from "./commands";
+import {ValidationError} from "./utils";
 
 const app = express();
 const server = http.createServer(app);
@@ -32,8 +32,8 @@ const SKAT_GAME = () =>
     getInitialGameState(
         3,
         [
-            {type: 'closed', maxCards: null},
-            {type: 'open', maxCards: null}
+            {isOpen: false, maxCards: null, canMove: 'last'},
+            {isOpen: true, maxCards: null, canMove: 'last'}
         ],
         'skat',
         true
@@ -43,32 +43,43 @@ const UNO_GAME = () =>
     getInitialGameState(
         4,
         [
-            {type: 'closed', maxCards: null},
-            {type: 'open', maxCards: null}
+            {isOpen: false, maxCards: null, canMove: 'last'},
+            {isOpen: true, maxCards: null, canMove: 'last'}
         ],
-        'skat',
-        false
+        'poker',
+        true
     );
 
 function getInitialGameState(numSeats, slotDescriptions, cardType, shuffle) {
-    const seats = Array(numSeats).fill(null).map(() => ({cards: []}));
-    const slots = slotDescriptions.map(description =>
-        ({
-            type: description.type,
-            maxCards: description.maxCards,
-            cards: []
-        })
+    const seatCardEntries = Array(numSeats).fill(null).map(
+        (_, i) =>
+            [`seat-${i}`, []]
     );
+    const slotCardEntries = slotDescriptions.map(
+        (_, i) =>
+            [`slot-${i}`, []]
+    );
+    const cards = Object.fromEntries(seatCardEntries.concat(slotCardEntries));
+
+    const seatConfigEntries = Array(numSeats).fill(null).map(
+        (_, i) =>
+            [`seat-${i}`, {closed: true, maxCards: null, canMove: 'all'}]
+    );
+    const slotConfigEntries = slotDescriptions.map(
+        (description, i) =>
+            [`slot-${i}`, {...description}]
+    );
+    const config = Object.fromEntries(seatConfigEntries.concat(slotConfigEntries));
+
     if (cardType === 'skat') {
-        slots[0].cards = SKAT_CARDS()
+        cards['slot-0'] = SKAT_CARDS()
     } else if (cardType === 'poker') {
-        slots[0].cards = POKER_CARDS()
+        cards['slot-0'] = POKER_CARDS()
     }
     if (shuffle) {
-        shuffleArray(slots[0].cards)
+        shuffleArray(cards['seat-0'])
     }
-
-    return {seats, slots};
+    return {cards, config};
 }
 
 function validateMoveRequest(moveRequest, state) {
@@ -81,11 +92,11 @@ function validateMoveRequest(moveRequest, state) {
 
 function parseMove(moveRequest) {
     if (moveRequest.command === 'move') {
-        const cards = moveRequest.args.cards.map(card => card.id);
-        const from = moveRequest.args.from;
-        const to = moveRequest.args.to;
-        const at = moveRequest.args.at;
-        return new MoveCards(cards, from, to, at)
+        const cardId = moveRequest.args.cardId;
+        const fromSlug = moveRequest.args.fromSlug;
+        const toSlug = moveRequest.args.toSlug;
+        const newIndex = moveRequest.args.newIndex;
+        return new MoveCards([cardId], fromSlug, toSlug, newIndex)
     } else {
         throw new ValidationError(`Invalid command: ${moveRequest.command}`)
     }
@@ -93,24 +104,22 @@ function parseMove(moveRequest) {
 
 let gameState = UNO_GAME();
 let moveHistory = [];
-
 const seatMap = new Map();
 
 function getGameStateFor(socket) {
     // TODO: history might leak redacted game state through move description!
     const seatNumber = seatMap.get(socket.id).seatNumber;
-    const redactedState = cloneState(gameState);
-    for (let [i, seat] of redactedState.seats.entries()) {
-        if (i !== seatNumber) {
-            seat.cards = seat.cards.map(card => ({id: card.id, face: '*'}))
-        }
-    }
-    for (let slot of redactedState.slots) {
-        if (slot.type === 'closed') {
-            slot.cards = slot.cards.map(card => ({id: card.id, face: '*'}))
-        }
-    }
-    return redactedState
+    const cards = Object.fromEntries(
+        Object.entries(gameState.cards).map(
+            ([key, cards]) => {
+                if (key === `seat-${seatNumber}` || gameState.config[key].isOpen) {
+                    return [key, cards]
+                }
+                return [key, cards.map(card => ({...card, face: '*'}))];
+            }
+        )
+    );
+    return {...gameState, cards}
 }
 
 io.on('connection', (socket) => {
@@ -144,21 +153,38 @@ io.on('connection', (socket) => {
             const move = validateMoveRequest(moveRequest, gameState);
             gameState = move.apply(gameState);
             moveHistory = [...moveHistory, moveRequest];
-            socket.emit('confirmMove', {move: moveRequest, gameState: getGameStateFor(socket), moveHistory});
-            Object.values(io.sockets.connected)
-                .filter(otherSocket => otherSocket.id !== socket.id)
-                .forEach(otherSocket =>
-                    otherSocket.emit('remoteMove', {move: moveRequest, gameState: getGameStateFor(otherSocket), moveHistory})
-                );
+            socket.emit('confirmMove', {
+                move: moveRequest,
+                gameState: getGameStateFor(socket),
+                moveHistory
+            });
+            const otherSockets = Object.values(io.sockets.connected).filter(
+                otherSocket =>
+                    otherSocket.id !== socket.id
+            );
+            otherSockets.forEach(
+                otherSocket =>
+                    otherSocket.emit('remoteMove', {
+                        move: moveRequest,
+                        gameState: getGameStateFor(otherSocket),
+                        moveHistory
+                    })
+            );
         } catch (err) {
             if (err instanceof ValidationError) {
-                socket.emit('rejectMove', {move: moveRequest, error: err.message, gameState: getGameStateFor(socket), moveHistory});
+                socket.emit('rejectMove', {
+                    move: moveRequest,
+                    error: err.message,
+                    gameState: getGameStateFor(socket),
+                    moveHistory
+                });
             } else {
                 throw err
             }
         }
     });
-});
+})
+;
 
 server.listen(8000, () => {
     console.log('listening on *:8000');

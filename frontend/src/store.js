@@ -1,65 +1,73 @@
 import Vue from "vue";
 import Vuex from 'vuex'
 import socket from './socket'
+import {MoveCards} from "./shared/commands";
 
 Vue.use(Vuex);
 
 export default new Vuex.Store({
     state: {
         gameState: {
-            seats: [],
-            slots: []
+            cards: {},
+            config: {}
         },
         moveHistory: [],
+        currentSeatNumber: null
+    },
+    getters: {
+        lastMove(state) {
+            return state.moveHistory.filter(move => move.command === 'move').pop()
+        },
+        lastMoveCardId(state, getters) {
+            if (!getters.lastMove) {
+                return null
+            }
+            return getters.lastMove.args.cardId
+        },
+        lastMoveFromSlug(state, getters) {
+            if (!getters.lastMove) {
+                return null
+            }
+            return getters.lastMove.args.fromSlug
+        },
+        firstOpenSlotSlug(state) {
+            const openSlots = Object.entries(state.gameState.config).filter(
+                ([key, config]) =>
+                    key.startsWith('slot-') && config.isOpen
+            );
+            if (openSlots) {
+                const [key] = openSlots[0];
+                return key;
+            }
+            return null
+        },
+        numSeats(state) {
+            return Object.keys(state.gameState.cards).filter(key => key.startsWith('seat-')).length
+        },
+        checkMove(state) {
+            return ({cardId, fromSlug, toSlug, newIndex}) => {
+                const command = new MoveCards([cardId], fromSlug, toSlug, newIndex);
+                return command.isValid(state.gameState)
+            }
+        }
     },
     mutations: {
         updateState(state, {gameState, moveHistory}) {
             state.gameState = gameState;
             state.moveHistory = moveHistory;
         },
-        moveCard(state, {card, fromSlug, toSlug, oldIndex, newIndex}) {
-            const [fromType, fromNumber] = fromSlug.split('-');
-            const [toType, toNumber] = toSlug.split('-');
-            let from;
-            if (fromType === 'slot') {
-                from = state.gameState.slots[fromNumber]
-            } else if (fromType === 'seat') {
-                from = state.gameState.seats[fromNumber]
-            } else {
-                throw new TypeError(`Invalid type: ${fromType}`)
-            }
-            let to;
-            if (toType === 'slot') {
-                to = state.gameState.slots[toNumber]
-            } else if (toType === 'seat') {
-                to = state.gameState.seats[toNumber]
-            } else {
-                throw new TypeError(`Invalid type: ${toType}`)
-            }
-
-            from.cards = from.cards
-                .slice(0, oldIndex)
-                .concat(from.cards.slice(oldIndex + 1));
-            to.cards = to.cards
-                .slice(0, newIndex)
-                .concat([{face: card.face, id: card.id}])
-                .concat(to.cards.slice(newIndex));
+        moveCard(state, {cardId, fromSlug, toSlug, newIndex}) {
+            const command = new MoveCards([cardId], fromSlug, toSlug, newIndex);
+            state.gameState = command.apply(state.gameState);
 
             socket.emit('requestMove', {
                 command: 'move',
-                args: {
-                    cards: [{id: card.id, face: card.face}],
-                    from: {
-                        type: fromType,
-                        number: fromNumber
-                    },
-                    to: {
-                        type: toType,
-                        number: toNumber
-                    },
-                    at: newIndex
-                }
+                args: {cardId, fromSlug, toSlug, newIndex}
             })
+        },
+        takeSeat(state, {seatNumber}) {
+            state.currentSeatNumber = seatNumber;
+            socket.emit('takeSeat', seatNumber);
         }
     }
 });
