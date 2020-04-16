@@ -1,6 +1,5 @@
 <template>
     <div class="table">
-        <div class="seat-switch" @click="switchSeat">X</div>
         <card-fan
                 v-for="seat in seatConfig"
                 :class="`${seat.position}-seat`"
@@ -8,12 +7,14 @@
                 :name="seat.name"
                 :key="seat.name"
         />
-        <card-stack
-                v-for="slot in slotConfig"
-                :class="`${slot.position}-slot`"
-                :name="slot.name"
-                :key="slot.name"
-        />
+        <div class="slots">
+            <div class="seat-switch" @click="switchSeat">switch<br>seat</div>
+            <card-stack
+                    v-for="slot in slotConfig"
+                    :name="slot.name"
+                    :key="slot.name"
+            />
+        </div>
     </div>
 </template>
 
@@ -43,7 +44,17 @@
                     seatSlugs = seatSlugs.slice(currentSeatSlugIndex).concat(seatSlugs.slice(0, currentSeatSlugIndex));
                 }
 
-                const seatOrientations = [
+                const cards = seatSlugs.map(slug => this.gameState.cards[slug]);
+                return seatSlugs.map(
+                    (slug, i) => ({
+                        name: slug,
+                        cards: cards[i],
+                        ...this.seatOrientations[i]
+                    })
+                );
+            },
+            seatOrientations() {
+                const [bottom, left, top, right] = [
                     {
                         position: 'bottom',
                         orientation: 'horizontal'
@@ -60,16 +71,17 @@
                         position: 'right',
                         orientation: 'vertical'
                     }
-                ];
+                ]
 
-                const cards = seatSlugs.map(slug => this.gameState.cards[slug]);
-                return seatSlugs.map(
-                    (slug, i) => ({
-                        name: slug,
-                        cards: cards[i],
-                        ...seatOrientations[i]
-                    })
-                );
+                if (this.numSeats === 1) {
+                    return [bottom];
+                } else if (this.numSeats === 2) {
+                    return [bottom, top]
+                } else if (this.numSeats === 3) {
+                    return [bottom, left, right]
+                } else if (this.numSeats === 4) {
+                    return [bottom, left, top, right]
+                }
             },
             slotConfig() {
                 const cards = Object.fromEntries(Object.entries(this.gameState.cards).filter(([key]) => key.startsWith('slot-')));
@@ -174,71 +186,102 @@
     .table {
         height: 100%;
         background: darkseagreen;
-        padding: 10px;
+        padding: 6px;
         box-sizing: border-box;
 
         display: grid;
-        grid-template-columns: var(--card-container-height) 1fr 1fr var(--card-container-height);
+        grid-template-columns: var(--card-container-height) 1fr var(--card-container-height);
         grid-template-rows: var(--card-container-height) 1fr var(--card-container-height);
         align-items: center;
         justify-items: center;
-        column-gap: 15px;
-        row-gap: 15px;
+        column-gap: 6px;
+        row-gap: 6px;
 
         --card-width: 60px;
         --card-height: 100px;
         --card-container-border: 2px;
-        --card-container-padding: 4px;
+        --card-container-padding: 6px;
         --card-container-height: calc(var(--card-height) + 2 * (var(--card-container-border) + var(--card-container-padding)));
         --card-container-width: calc(var(--card-width) + 2 * (var(--card-container-border) + var(--card-container-padding)));
+    }
+
+    @media (orientation: landscape) {
+        .table {
+            grid-template-areas:
+                    "left top right"
+                    "left slots right"
+                    "left bottom right";
+        }
+    }
+    @media (orientation: portrait) {
+        .table {
+            grid-template-areas:
+                    "top top top"
+                    "left slots right"
+                    "bottom bottom bottom";
+        }
     }
 
     .seat-switch {
         cursor: pointer;
         position: absolute;
-        top: 50%;
-        left: 50%;
+        height: 3em;
+        width: 4em;
+        top: calc(50% - 1.5em);
+        left: calc(50% - 2em);
+        text-align: center;
+        font-weight: bold;
     }
 
     .left-seat {
-        grid-column-start: 1;
-        grid-column-end: 2;
-        grid-row-start: 1;
-        grid-row-end: 4;
+        grid-area: left;
     }
 
     .right-seat {
-        grid-column-start: 4;
-        grid-column-end: 5;
-        grid-row-start: 1;
-        grid-row-end: 4;
+        grid-area: right;
     }
 
     .top-seat {
-        grid-column-start: 2;
-        grid-column-end: 4;
-        grid-row-start: 1;
-        grid-row-end: 2;
+        grid-area: top;
     }
 
     .bottom-seat {
-        grid-column-start: 2;
-        grid-column-end: 4;
-        grid-row-start: 3;
-        grid-row-end: 4;
+        grid-area: bottom;
     }
 
-    .left-slot {
-        grid-column-start: 2;
-        grid-column-end: 3;
-        grid-row-start: 2;
-        grid-row-end: 3;
+    .slots {
+        grid-area: slots;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        align-content: space-around;
+        width: 100%;
+        height: 100%;
     }
 
-    .right-slot {
-        grid-column-start: 3;
-        grid-column-end: 4;
-        grid-row-start: 2;
-        grid-row-end: 3;
+    @media (orientation: landscape) {
+        .slots {
+            flex-direction: row;
+        }
     }
+    @media (orientation: portrait) {
+        .slots {
+            flex-direction: column;
+        }
+    }
+
+
+    /*.left-slot {*/
+    /*    grid-column-start: 2;*/
+    /*    grid-column-end: 3;*/
+    /*    grid-row-start: 2;*/
+    /*    grid-row-end: 3;*/
+    /*}*/
+
+    /*.right-slot {*/
+    /*    grid-column-start: 3;*/
+    /*    grid-column-end: 4;*/
+    /*    grid-row-start: 2;*/
+    /*    grid-row-end: 3;*/
+    /*}*/
 </style>

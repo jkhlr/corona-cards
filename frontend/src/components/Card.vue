@@ -58,7 +58,7 @@
     }
 
     .card.highlighted {
-        box-shadow: 0 0 5px 1px brown;
+        box-shadow: 0 0 3px 1px brown;
         background: brown
     }
 </style>

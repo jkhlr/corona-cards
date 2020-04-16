@@ -36,6 +36,7 @@ const SKAT_GAME = () =>
             {isOpen: true, maxCards: null, canMove: 'last'}
         ],
         'skat',
+        true,
         true
     );
 
@@ -47,29 +48,27 @@ const UNO_GAME = () =>
             {isOpen: true, maxCards: null, canMove: 'last'}
         ],
         'poker',
-        true
+        true,
+        false
     );
 
-function getInitialGameState(numSeats, slotDescriptions, cardType, shuffle) {
-    const seatCardEntries = Array(numSeats).fill(null).map(
-        (_, i) =>
-            [`seat-${i}`, []]
-    );
-    const slotCardEntries = slotDescriptions.map(
-        (_, i) =>
-            [`slot-${i}`, []]
-    );
-    const cards = Object.fromEntries(seatCardEntries.concat(slotCardEntries));
+function getInitialGameState(numSeats, slotDescriptions, cardType, shuffle, stash) {
+    const seatCardEntries = [...Array(numSeats).keys()].map(i => [`seat-${i}`, []]);
+    const stashCardEntries = stash ? [...Array(numSeats).keys()].map(i => [`stash-${i}`, []]) : []
+    const slotCardEntries = slotDescriptions.map((_, i) => [`slot-${i}`, []]);
 
-    const seatConfigEntries = Array(numSeats).fill(null).map(
-        (_, i) =>
-            [`seat-${i}`, {closed: true, maxCards: null, canMove: 'all'}]
+    const cards = Object.fromEntries(seatCardEntries.concat(stashCardEntries).concat(slotCardEntries));
+
+    const seatConfigEntries = [...Array(numSeats).keys()].map(
+        i =>
+            [`seat-${i}`, {isOpen: false, maxCards: null, canMove: 'all'}]
     );
-    const slotConfigEntries = slotDescriptions.map(
-        (description, i) =>
-            [`slot-${i}`, {...description}]
-    );
-    const config = Object.fromEntries(seatConfigEntries.concat(slotConfigEntries));
+    const stashConfigEntries = stash ? [...Array(numSeats).keys()].map(
+        i =>
+            [`stash-${i}`, {isOpen: true, maxCards: null, canMove: 'all'}]
+    ) : []
+    const slotConfigEntries = slotDescriptions.map((description, i) => [`slot-${i}`, {...description}]);
+    const config = Object.fromEntries(seatConfigEntries.concat(stashConfigEntries).concat(slotConfigEntries));
 
     if (cardType === 'skat') {
         cards['slot-0'] = SKAT_CARDS()
