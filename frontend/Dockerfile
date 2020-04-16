@@ -1,7 +1,6 @@
 FROM node:13.12.0-alpine3.11 as build
 
 RUN apk add --no-cache --update yarn
-RUN yarn global add gzipper
 
 WORKDIR /srv
 COPY package.json yarn.lock ./
@@ -10,7 +9,6 @@ RUN yarn install --frozen-lockfile
 COPY src src
 COPY public public
 RUN yarn run build
-RUN gzipper --verbose ./dist
 
 FROM nginx:1.16-alpine as prod
 
