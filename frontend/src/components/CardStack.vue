@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div style="padding: 2px">
         <card-container
                 class="card-stack"
                 :class="{highlighted: isHighlighted}"
@@ -38,7 +38,6 @@
         border-radius: 5px;
         border: var(--card-container-border) solid white;
         padding: var(--card-container-padding);
-        margin: var(--slot-margin);
 
         box-sizing: border-box;
         height: var(--card-container-height);

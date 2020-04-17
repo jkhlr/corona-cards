@@ -8,7 +8,9 @@
                 :key="seat.name"
         />
         <div class="slots">
-            <div class="seat-switch" @click="switchSeat">switch<br>seat</div>
+            <div class="seat-switch" @click="switchSeat">
+                <span>x</span>
+            </div>
             <card-stack
                     v-for="slot in slotConfig"
                     :name="slot.name"
@@ -197,14 +199,17 @@
         column-gap: 4px;
         row-gap: 4px;
 
-        --card-width: 60px;
+        user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        -webkit-touch-callout: none;
+
+        --card-width: 65px;
         --card-height: 100px;
         --card-container-border: 2px;
         --card-container-padding: 4px;
         --card-container-height: calc(var(--card-height) + 2 * (var(--card-container-border) + var(--card-container-padding)));
         --card-container-width: calc(var(--card-width) + 2 * (var(--card-container-border) + var(--card-container-padding)));
-
-        --slot-margin: 4px;
     }
 
     @media (orientation: landscape) {
@@ -253,10 +258,10 @@
     .seat-switch {
         cursor: pointer;
         position: absolute;
-        height: 3em;
-        width: 4em;
-        top: calc(50% - 1.5em);
-        left: calc(50% - 2em);
+        height: 2em;
+        width: 2em;
+        top: calc(50% - 1em);
+        left: calc(50% - 1em);
         text-align: center;
         font-weight: bold;
     }
