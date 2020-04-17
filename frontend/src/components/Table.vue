@@ -186,7 +186,7 @@
     .table {
         height: 100%;
         background: darkseagreen;
-        padding: 6px;
+        padding: 4px;
         box-sizing: border-box;
 
         display: grid;
@@ -194,15 +194,17 @@
         grid-template-rows: var(--card-container-height) 1fr var(--card-container-height);
         align-items: center;
         justify-items: center;
-        column-gap: 6px;
-        row-gap: 6px;
+        column-gap: 4px;
+        row-gap: 4px;
 
         --card-width: 60px;
         --card-height: 100px;
         --card-container-border: 2px;
-        --card-container-padding: 6px;
+        --card-container-padding: 4px;
         --card-container-height: calc(var(--card-height) + 2 * (var(--card-container-border) + var(--card-container-padding)));
         --card-container-width: calc(var(--card-width) + 2 * (var(--card-container-border) + var(--card-container-padding)));
+
+        --slot-margin: 4px;
     }
 
     @media (orientation: landscape) {
@@ -220,17 +222,6 @@
                     "left slots right"
                     "bottom bottom bottom";
         }
-    }
-
-    .seat-switch {
-        cursor: pointer;
-        position: absolute;
-        height: 3em;
-        width: 4em;
-        top: calc(50% - 1.5em);
-        left: calc(50% - 2em);
-        text-align: center;
-        font-weight: bold;
     }
 
     .left-seat {
@@ -253,35 +244,20 @@
         grid-area: slots;
         display: flex;
         flex-wrap: wrap;
-        justify-content: space-around;
-        align-content: space-around;
+        justify-content: center;
+        align-content: center;
         width: 100%;
         height: 100%;
     }
 
-    @media (orientation: landscape) {
-        .slots {
-            flex-direction: row;
-        }
+    .seat-switch {
+        cursor: pointer;
+        position: absolute;
+        height: 3em;
+        width: 4em;
+        top: calc(50% - 1.5em);
+        left: calc(50% - 2em);
+        text-align: center;
+        font-weight: bold;
     }
-    @media (orientation: portrait) {
-        .slots {
-            flex-direction: column;
-        }
-    }
-
-
-    /*.left-slot {*/
-    /*    grid-column-start: 2;*/
-    /*    grid-column-end: 3;*/
-    /*    grid-row-start: 2;*/
-    /*    grid-row-end: 3;*/
-    /*}*/
-
-    /*.right-slot {*/
-    /*    grid-column-start: 3;*/
-    /*    grid-column-end: 4;*/
-    /*    grid-row-start: 2;*/
-    /*    grid-row-end: 3;*/
-    /*}*/
 </style>

@@ -38,6 +38,7 @@
         border-radius: 5px;
         border: var(--card-container-border) solid white;
         padding: var(--card-container-padding);
+        margin: var(--slot-margin);
 
         box-sizing: border-box;
         height: var(--card-container-height);

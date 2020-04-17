@@ -1,5 +1,13 @@
 <template>
-    <vue-draggable :value="cards" @end="endDrag" :move="checkDrag" group="cards" filter=".non-movable">
+    <vue-draggable
+            :value="cards"
+            @end="endDrag"
+            :move="checkDrag"
+            group="cards"
+            filter=".non-movable"
+            :delay="125"
+            :delayOnTouchOnly="true"
+    >
         <card
                 v-for="(card, i) in cards"
                 v-bind="card"
