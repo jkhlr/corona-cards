@@ -10,12 +10,12 @@ jobs:
 
       - name: deploy to corona-cards.net
         uses: appleboy/ssh-action@master
-          with:
-            host: ${{ secrets.HOST }}
-            username: ${{ secrets.USERNAME }}
-            key: ${{ secrets.KEY }}
-            script_stop: true
-            script: |
-              cd ~/corona-cards
-              git pull
-              docker-compose up --build -d
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          script_stop: true
+          script: |
+            cd ~/corona-cards
+            git pull
+            docker-compose up --build -d
