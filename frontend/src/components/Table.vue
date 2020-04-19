@@ -204,7 +204,7 @@
         -ms-user-select: none;
         -webkit-touch-callout: none;
 
-        --card-width: 65px;
+        --card-width: 60px;
         --card-height: 100px;
         --card-container-border: 2px;
         --card-container-padding: 4px;

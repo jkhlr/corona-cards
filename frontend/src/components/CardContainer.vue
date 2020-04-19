@@ -1,12 +1,14 @@
 <template>
     <vue-draggable
+            class="card-container"
             :value="cards"
             @end="endDrag"
             :move="checkDrag"
             group="cards"
             filter=".non-movable"
-            :delay="125"
+            :delay="100"
             :delayOnTouchOnly="true"
+            :componentData="{attrs: {name: this.name}}"
     >
         <card
                 v-for="(card, i) in cards"
@@ -50,17 +52,18 @@
                 return false
             },
             endDrag({from, to, item, oldIndex, newIndex}) {
-                const fromSlug = from.__vue__.$parent.name;
-                const toSlug = to.__vue__.$parent.name;
-                const cardId = item.__vue__.id;
+                const fromSlug = from.attributes['name'].value;
+                const toSlug = to.attributes['name'].value;
+                const cardId = parseInt(item.attributes['card-id'].value)
                 if (fromSlug !== toSlug || oldIndex !== newIndex) {
                     this.$store.commit('moveCard', {cardId, fromSlug, toSlug, newIndex});
                 }
             },
             checkDrag({from, to, dragged, draggedContext: {index: oldIndex, futureIndex: newIndex}}) {
-                const fromSlug = from.__vue__.$parent.name;
-                const toSlug = to.__vue__.$parent.name;
-                const cardId = dragged.__vue__.id;
+                const fromSlug = from.attributes['name'].value;
+                const toSlug = to.attributes['name'].value;
+                const cardId = parseInt(dragged.attributes['card-id'].value)
+                console.log(fromSlug, toSlug, cardId)
                 if (fromSlug === toSlug && oldIndex === newIndex) {
                     return true
                 }

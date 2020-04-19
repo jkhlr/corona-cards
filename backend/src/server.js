@@ -101,7 +101,7 @@ function parseMove(moveRequest) {
     }
 }
 
-let gameState = UNO_GAME();
+let gameState = SKAT_GAME();
 let moveHistory = [];
 const seatMap = new Map();
 

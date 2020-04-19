@@ -1,10 +1,14 @@
 <template>
-    <div style="height: 100%; width: 100%">
-        <card-container
-                class="card-fan"
-                :class="{highlighted: isHighlighted, [orientation]: true}"
-                :name="name"
-        />
+    <div
+            class="card-fan"
+            :class="{
+                highlighted: showStash && isStashHighlighted || !showStash && isHighlighted,
+                [orientation]: true
+            }"
+    >
+        <card-container v-if="showStash" :name="stashName"/>
+        <card-container v-else :name="name"/>
+        <span v-show="hasStash" class="slot-switch" @click="showStash = !showStash">o</span>
     </div>
 </template>
 
@@ -13,6 +17,11 @@
 
     export default {
         name: "CardFan",
+        data() {
+            return {
+                showStash: false
+            }
+        },
         props: {
             name: {
                 type: String,
@@ -26,6 +35,16 @@
         computed: {
             isHighlighted() {
                 return this.$store.getters.lastMoveFromSlug === this.name
+            },
+            stashName() {
+                const [_, seatNumber] = this.name.split('-')
+                return `stash-${seatNumber}`
+            },
+            isStashHighlighted() {
+                return this.$store.getters.lastMoveFromSlug === this.stashName
+            },
+            hasStash() {
+                return this.$store.state.gameState.config.hasOwnProperty(this.stashName)
             }
         },
         components: {
@@ -35,24 +54,41 @@
 </script>
 <style scoped>
     .card-fan {
-        display: flex;
-        justify-content: center;
-
         border-radius: 5px;
         border: var(--card-container-border) solid white;
         padding: var(--card-container-padding);
-
         box-sizing: border-box;
+
+        display: flex;
+        position: relative;
+    }
+
+    .slot-switch {
+        content: 'o';
+        position: absolute;
+        top: -12px;
+        right: -5px;
     }
 
     .card-fan.highlighted {
         box-shadow: 0 0 3px 1px brown
     }
 
+    .card-fan >>> .card-container {
+        display: flex;
+        justify-content: center;
+        flex-grow: 1;
+    }
+
     .card-fan.horizontal {
         flex-direction: row;
+
         width: 100%;
         height: var(--card-container-height);
+    }
+
+    .card-fan.horizontal >>> .card-container {
+        flex-direction: row;
     }
 
     .card-fan.horizontal >>> .card {
@@ -67,8 +103,13 @@
 
     .card-fan.vertical {
         flex-direction: column;
+
         width: var(--card-container-height);
         height: 100%;
+    }
+
+    .card-fan.vertical >>> .card-container {
+        flex-direction: column;
     }
 
     .card-fan.vertical >>> .card {

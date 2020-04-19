@@ -1,5 +1,5 @@
 <template>
-    <div class="card" @click="onClick" :class="{highlighted: isHighlighted}">
+    <div class="card" @click="onClick" :class="{highlighted: isHighlighted}" :card-id="id">
         <img :src="imagePath" :alt="altText"/>
     </div>
 </template>

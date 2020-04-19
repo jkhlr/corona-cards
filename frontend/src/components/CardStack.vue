@@ -1,11 +1,6 @@
 <template>
-    <div style="padding: 2px">
-        <card-container
-                class="card-stack"
-                :class="{highlighted: isHighlighted}"
-                :name="name"
-        >
-        </card-container>
+    <div class="card-stack" :class="{highlighted: isHighlighted}">
+        <card-container :name="name" />
     </div>
 </template>
 
@@ -32,20 +27,25 @@
 </script>
 <style scoped>
     .card-stack {
-        display: flex;
-        justify-content: center;
-
         border-radius: 5px;
+        margin: 4px;
         border: var(--card-container-border) solid white;
         padding: var(--card-container-padding);
-
         box-sizing: border-box;
+
         height: var(--card-container-height);
         width: var(--card-container-width);
+        display: flex
     }
 
     .card-stack.highlighted {
         box-shadow: 0 0 3px 1px brown;
+    }
+
+    .card-stack >>> .card-container {
+        flex-grow: 1;
+        display: flex;
+        justify-content: center;
     }
 
     .card-stack >>> .card {
