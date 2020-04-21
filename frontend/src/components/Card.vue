@@ -49,6 +49,7 @@
         border-radius: 5px;
         background: white;
         box-sizing: border-box;
+        z-index: 1;
     }
 
     .card img {

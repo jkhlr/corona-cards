@@ -188,7 +188,7 @@
     .table {
         height: 100%;
         background: darkseagreen;
-        padding: 4px;
+        padding: 8px;
         box-sizing: border-box;
 
         display: grid;
@@ -196,18 +196,18 @@
         grid-template-rows: var(--card-container-height) 1fr var(--card-container-height);
         align-items: center;
         justify-items: center;
-        column-gap: 4px;
-        row-gap: 4px;
+        column-gap: 8px;
+        row-gap: 8px;
 
         user-select: none;
         -webkit-user-select: none;
         -ms-user-select: none;
         -webkit-touch-callout: none;
 
-        --card-width: 60px;
-        --card-height: 100px;
+        --card-width: 54px;
+        --card-height: 90px;
         --card-container-border: 2px;
-        --card-container-padding: 4px;
+        --card-container-padding: 8px;
         --card-container-height: calc(var(--card-height) + 2 * (var(--card-container-border) + var(--card-container-padding)));
         --card-container-width: calc(var(--card-width) + 2 * (var(--card-container-border) + var(--card-container-padding)));
     }

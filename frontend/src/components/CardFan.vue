@@ -6,9 +6,14 @@
                 [orientation]: true
             }"
     >
+        <span class="border-text player-name">NAME</span>
         <card-container v-if="showStash" :name="stashName"/>
         <card-container v-else :name="name"/>
-        <span v-show="hasStash" class="slot-switch" @click="showStash = !showStash">o</span>
+        <span class="border-text stash-toggle" v-if="hasStash" @click="showStash = !showStash">
+            <a :class="{active: showStash}">stash</a>
+            <span> | </span>
+            <a :class="{active: !showStash}">hand</a>
+        </span>
     </div>
 </template>
 
@@ -63,11 +68,26 @@
         position: relative;
     }
 
-    .slot-switch {
-        content: 'o';
+    .card-fan .border-text {
+        font-size: 12px;
         position: absolute;
-        top: -12px;
-        right: -5px;
+        background: darkseagreen;
+    }
+
+    .card-fan .stash-toggle {
+        padding: 0 3px;
+        bottom: -7px;
+        right: 10px;
+    }
+
+    .card-fan .player-name {
+        padding: 0 3px;
+        top: -7px;
+        left: 10px;
+    }
+
+    .stash-toggle .active {
+        font-weight: bold;
     }
 
     .card-fan.highlighted {

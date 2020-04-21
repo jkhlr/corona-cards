@@ -6,7 +6,7 @@
             :move="checkDrag"
             group="cards"
             filter=".non-movable"
-            :delay="100"
+            :delay="1"
             :delayOnTouchOnly="true"
             :componentData="{attrs: {name: this.name}}"
     >
