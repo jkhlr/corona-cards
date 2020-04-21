@@ -13,7 +13,11 @@ export default new Vuex.Store({
             config: {}
         },
         moveHistory: [],
-        currentSeatNumber: null
+        currentSeatNumber: null,
+        cardSize: {
+            width: 60,
+            height: 100
+        }
     },
     getters: {
         lastMove(state) {

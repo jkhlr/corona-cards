@@ -1,5 +1,5 @@
 <template>
-    <div class="table">
+    <div class="table" :style="`--card-width: ${cardSize.width}px; --card-height: ${cardSize.height}px`">
         <card-seat
                 v-for="seat in seatConfig"
                 :class="`${seat.position}-seat`"
@@ -114,7 +114,8 @@
             },
             ...mapState([
                 'gameState',
-                'currentSeatNumber'
+                'currentSeatNumber',
+                'cardSize'
             ]),
             ...mapGetters([
                 'numSeats'
@@ -169,11 +170,10 @@
                 }
             }
             ,
-            ...
-                mapMutations([
-                    'updateState',
-                    'takeSeat'
-                ])
+            ...mapMutations([
+                'updateState',
+                'takeSeat'
+            ])
         }
         ,
         watch: {
@@ -196,6 +196,14 @@
 
 <style scoped>
     .table {
+        --card-width: none;
+        --card-height: none;
+        --card-container-border: 2px;
+        --card-container-padding: 8px;
+        --card-container-height: calc(var(--card-height) + 2 * (var(--card-container-border) + var(--card-container-padding)));
+    }
+
+    .table {
         height: 100%;
         background: darkseagreen;
         padding: 8px;
@@ -213,13 +221,6 @@
         -webkit-user-select: none;
         -ms-user-select: none;
         -webkit-touch-callout: none;
-
-        --card-width: 54px;
-        --card-height: 90px;
-        --card-container-border: 2px;
-        --card-container-padding: 8px;
-        --card-container-height: calc(var(--card-height) + 2 * (var(--card-container-border) + var(--card-container-padding)));
-        --card-container-width: calc(var(--card-width) + 2 * (var(--card-container-border) + var(--card-container-padding)));
     }
 
     @media (orientation: landscape) {

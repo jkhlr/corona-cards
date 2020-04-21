@@ -19,6 +19,7 @@
 
 <script>
     import CardContainer from "@/components/CardContainer";
+    import {mapGetters} from "vuex";
 
     export default {
         name: "CardSeat",
@@ -108,13 +109,13 @@
     }
 
     .card-fan.horizontal >>> .card {
-        margin-right: calc(var(--card-width) / -2);
+        margin-right: calc(-1 * var(--card-width) * var(--overlap));
         width: var(--card-width);
         height: var(--card-height);
     }
 
     .card-fan.horizontal >>> .card:first-child {
-        margin-left: calc(var(--card-width) / -2);
+        margin-left: calc(-1 * var(--card-width) * var(--overlap));
     }
 
     .card-fan.vertical {

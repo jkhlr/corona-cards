@@ -31,10 +31,9 @@
         margin: 4px;
         border: var(--card-container-border) solid white;
         padding: var(--card-container-padding);
-        box-sizing: border-box;
 
-        height: var(--card-container-height);
-        width: var(--card-container-width);
+        height: var(--card-height);
+        width: var(--card-width);
         display: flex
     }
 

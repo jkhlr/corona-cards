@@ -1,23 +1,27 @@
 <template>
-    <vue-draggable
-            class="card-container"
-            :value="cards"
-            @end="endDrag"
-            :move="checkDrag"
-            group="cards"
-            filter=".non-movable"
-            :delay="1"
-            :delayOnTouchOnly="true"
-            :componentData="{attrs: {name: this.name}}"
-    >
-        <card
-                v-for="(card, i) in cards"
-                v-bind="card"
-                :class="{'non-movable': !movable(i)}"
-                :key="card.id"
-                @click="clickCard"
-        />
-    </vue-draggable>
+    <div class="wrapper" :style="`--overlap: ${overlap}`">
+        <vue-draggable
+                ref="cardContainer"
+                class="card-container"
+                :value="cards"
+                @end="endDrag"
+                :move="checkDrag"
+                group="cards"
+                filter=".non-movable"
+                :delay="1"
+                :delayOnTouchOnly="true"
+                :componentData="{attrs: {name: this.name}}"
+        >
+            <card
+                    v-for="(card, i) in cards"
+                    v-bind="card"
+                    :class="{'non-movable': !movable(i)}"
+                    :key="card.id"
+                    @click="clickCard"
+            />
+        </vue-draggable>
+        <resize-observer @notify="size = $event" />
+    </div>
 </template>
 
 <script>
@@ -25,20 +29,33 @@
     import Card from "@/components/Card";
 
     export default {
-        name: "Draggable",
+        name: "CardContainer",
+        data() {
+            return {
+                size: {
+                    width: null,
+                    height: null
+                },
+                numCardElements: null
+            }
+        },
         props: {
             name: {
                 type: String,
                 required: true
             }
         },
-
         computed: {
             cards() {
                 return this.$store.state.gameState.cards[this.name]
             },
             config() {
                 return this.$store.state.gameState.config[this.name]
+            },
+            overlap() {
+                const cardWidth = this.$store.state.cardSize.width;
+                const overlap = (this.numCardElements * cardWidth - this.size.width) / ((this.numCardElements - 1) * cardWidth)
+                return Math.max(overlap, 0.5)
             },
         },
         methods: {
@@ -82,18 +99,19 @@
                 if (toSlug && this.$store.getters.checkMove({cardId, fromSlug, toSlug, newIndex})) {
                     this.$store.commit('moveCard', {cardId, fromSlug, toSlug, newIndex});
                 }
-            },
-            updateOverlap() {
-                const containerElement = this.$refs.root
-                const containerWidth = 108
-                const numCards = this.numCards + 1;
-                const cardWidth = parseInt(getComputedStyle(containerElement).getPropertyValue('--card-width'))
-                let overlap = (numCards * cardWidth - containerWidth) / ((numCards - 1) * cardWidth)
-                if (overlap < 0.5) {
-                    overlap = 0.5
-                }
-                this.$refs.root.style.setProperty('--overlap', overlap.toString())
             }
+        },
+        mounted() {
+            const draggableElement = this.$refs.cardContainer.$el
+            this.numCardElements = draggableElement.childElementCount
+            this.$el.addEventListener(
+                'DOMNodeInserted',
+                () => this.numCardElements = draggableElement.childElementCount
+            )
+            this.$el.addEventListener(
+                'DOMNodeRemoved',
+                () => this.numCardElements = draggableElement.childElementCount - 1
+            )
         },
         components: {
             vueDraggable,
@@ -102,8 +120,11 @@
     };
 </script>
 <style scoped>
-    .card-container {
+    .wrapper {
+        position: relative;
+    }
+    .wrapper, .card-container {
         width: 100%;
-        height: 100%;
+        height: 100%
     }
 </style>

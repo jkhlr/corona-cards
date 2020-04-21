@@ -3,6 +3,7 @@ import App from "./App.vue";
 import router from "./router";
 import store from "./store";
 import "./socket"
+import "./resize"
 
 Vue.config.productionTip = false;
 
