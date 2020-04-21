@@ -82,6 +82,17 @@
                 if (toSlug && this.$store.getters.checkMove({cardId, fromSlug, toSlug, newIndex})) {
                     this.$store.commit('moveCard', {cardId, fromSlug, toSlug, newIndex});
                 }
+            },
+            updateOverlap() {
+                const containerElement = this.$refs.root
+                const containerWidth = 108
+                const numCards = this.numCards + 1;
+                const cardWidth = parseInt(getComputedStyle(containerElement).getPropertyValue('--card-width'))
+                let overlap = (numCards * cardWidth - containerWidth) / ((numCards - 1) * cardWidth)
+                if (overlap < 0.5) {
+                    overlap = 0.5
+                }
+                this.$refs.root.style.setProperty('--overlap', overlap.toString())
             }
         },
         components: {
@@ -90,3 +101,9 @@
         },
     };
 </script>
+<style scoped>
+    .card-container {
+        width: 100%;
+        height: 100%;
+    }
+</style>

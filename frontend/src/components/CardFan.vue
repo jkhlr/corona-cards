@@ -1,19 +1,6 @@
 <template>
-    <div
-            class="card-fan"
-            :class="{
-                highlighted: showStash && isStashHighlighted || !showStash && isHighlighted,
-                [orientation]: true
-            }"
-    >
-        <span class="border-text player-name">NAME</span>
-        <card-container v-if="showStash" :name="stashName"/>
-        <card-container v-else :name="name"/>
-        <span class="border-text stash-toggle" v-if="hasStash" @click="showStash = !showStash">
-            <a :class="{active: showStash}">stash</a>
-            <span> | </span>
-            <a :class="{active: !showStash}">hand</a>
-        </span>
+    <div class="card-fan" ref="root" :class="{ highlighted: isHighlighted }">
+        <card-container :name="name"/>
     </div>
 </template>
 
@@ -22,38 +9,44 @@
 
     export default {
         name: "CardFan",
-        data() {
-            return {
-                showStash: false
-            }
-        },
         props: {
             name: {
                 type: String,
                 required: true
-            },
-            orientation: {
-                type: String,
-                default: 'horizontal'
             }
         },
         computed: {
             isHighlighted() {
                 return this.$store.getters.lastMoveFromSlug === this.name
             },
-            stashName() {
-                const [_, seatNumber] = this.name.split('-')
-                return `stash-${seatNumber}`
-            },
-            isStashHighlighted() {
-                return this.$store.getters.lastMoveFromSlug === this.stashName
-            },
-            hasStash() {
-                return this.$store.state.gameState.config.hasOwnProperty(this.stashName)
+            numCards() {
+                return this.$store.state.gameState.cards[this.name].length
+            }
+        },
+        methods: {
+            updateOverlap() {
+                const containerElement = this.$refs.root
+                const containerWidth = 108
+                const numCards = this.numCards + 1;
+                const cardWidth = parseInt(getComputedStyle(containerElement).getPropertyValue('--card-width'))
+                let overlap = (numCards * cardWidth - containerWidth) / ((numCards - 1) * cardWidth)
+                if (overlap < 0.5) {
+                    overlap = 0.5
+                }
+                console.log(overlap)
+                this.$refs.root.style.setProperty('--overlap', overlap.toString())
             }
         },
         components: {
             CardContainer
+        },
+        watch: {
+            numCards() {
+                this.updateOverlap()
+            }
+        },
+        mounted() {
+            this.updateOverlap()
         }
     };
 </script>
@@ -62,89 +55,31 @@
         border-radius: 5px;
         border: var(--card-container-border) solid white;
         padding: var(--card-container-padding);
-        box-sizing: border-box;
+        box-sizing: content-box;
 
-        display: flex;
-        position: relative;
-    }
+        width: calc(2 * var(--card-width));
+        height: var(--card-height);
 
-    .card-fan .border-text {
-        font-size: 12px;
-        position: absolute;
-        background: darkseagreen;
-    }
-
-    .card-fan .stash-toggle {
-        padding: 0 3px;
-        bottom: -7px;
-        right: 10px;
-    }
-
-    .card-fan .player-name {
-        padding: 0 3px;
-        top: -7px;
-        left: 10px;
-    }
-
-    .stash-toggle .active {
-        font-weight: bold;
+        --overlap: 0.5;
     }
 
     .card-fan.highlighted {
-        box-shadow: 0 0 3px 1px brown
+        box-shadow: 0 0 3px 1px brown;
+
     }
 
     .card-fan >>> .card-container {
         display: flex;
         justify-content: center;
-        flex-grow: 1;
     }
 
-    .card-fan.horizontal {
-        flex-direction: row;
-
-        width: 100%;
-        height: var(--card-container-height);
-    }
-
-    .card-fan.horizontal >>> .card-container {
-        flex-direction: row;
-    }
-
-    .card-fan.horizontal >>> .card {
-        margin-right: calc(var(--card-width) / -2);
+    .card-fan >>> .card {
+        margin-right: calc(-1 * var(--card-width) * var(--overlap));
         width: var(--card-width);
         height: var(--card-height);
     }
 
-    .card-fan.horizontal >>> .card:first-child {
-        margin-left: calc(var(--card-width) / -2);
+    .card-fan >>> .card:first-child {
+        margin-left: calc(-1 * var(--card-width) * var(--overlap));
     }
-
-    .card-fan.vertical {
-        flex-direction: column;
-
-        width: var(--card-container-height);
-        height: 100%;
-    }
-
-    .card-fan.vertical >>> .card-container {
-        flex-direction: column;
-    }
-
-    .card-fan.vertical >>> .card {
-        margin-bottom: calc(var(--card-width) / -2);
-        width: var(--card-height);
-        height: var(--card-width);
-    }
-
-    .card-fan.vertical >>> .card:first-child {
-        margin-top: calc(var(--card-width) / -2);
-    }
-
-    .card-fan.vertical >>> .card img {
-        transform: rotate(90deg);
-        transform-origin: calc(var(--card-height) / 2) calc(var(--card-height) / 2);
-    }
-
 </style>

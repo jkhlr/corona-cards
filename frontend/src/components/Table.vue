@@ -1,6 +1,6 @@
 <template>
     <div class="table">
-        <card-fan
+        <card-seat
                 v-for="seat in seatConfig"
                 :class="`${seat.position}-seat`"
                 :orientation="seat.orientation"
@@ -11,7 +11,15 @@
             <div class="seat-switch" @click="switchSeat">
                 <span>x</span>
             </div>
-            <card-stack
+            <div v-if="false">
+                <card-stack
+                        v-for="slot in slotConfig"
+                        :name="slot.name"
+                        :key="slot.name"
+                />
+            </div>
+
+            <card-fan
                     v-for="slot in slotConfig"
                     :name="slot.name"
                     :key="slot.name"
@@ -23,6 +31,7 @@
 <script>
     import CardStack from "@/components/CardStack";
     import CardFan from "@/components/CardFan";
+    import CardSeat from "@/components/CardSeat";
     import {mapGetters, mapMutations, mapState} from "vuex";
 
     export default {
@@ -179,7 +188,8 @@
         ,
         components: {
             CardStack,
-            CardFan
+            CardFan,
+            CardSeat
         }
     }
 </script>
@@ -214,18 +224,13 @@
 
     @media (orientation: landscape) {
         .table {
-            grid-template-areas:
-                    "left top right"
-                    "left slots right"
-                    "left bottom right";
+            grid-template-areas: "left top right" "left slots right" "left bottom right";
         }
     }
+
     @media (orientation: portrait) {
         .table {
-            grid-template-areas:
-                    "top top top"
-                    "left slots right"
-                    "bottom bottom bottom";
+            grid-template-areas: "top top top" "left slots right" "bottom bottom bottom";
         }
     }
 
