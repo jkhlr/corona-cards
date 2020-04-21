@@ -15,8 +15,8 @@ export default new Vuex.Store({
         moveHistory: [],
         currentSeatNumber: null,
         cardSize: {
-            width: 60,
-            height: 100
+            width: 50,
+            height: 90
         }
     },
     getters: {

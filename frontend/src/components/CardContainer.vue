@@ -1,5 +1,5 @@
 <template>
-    <div class="wrapper" :style="`--overlap: ${overlap}`">
+    <div class="wrapper" :style="`--overlap-width: ${overlapWidth}; --overlap-height: ${overlapHeight}`">
         <vue-draggable
                 ref="cardContainer"
                 class="card-container"
@@ -8,7 +8,7 @@
                 :move="checkDrag"
                 group="cards"
                 filter=".non-movable"
-                :delay="1"
+                :delay="50"
                 :delayOnTouchOnly="true"
                 :componentData="{attrs: {name: this.name}}"
         >
@@ -20,7 +20,7 @@
                     @click="clickCard"
             />
         </vue-draggable>
-        <resize-observer @notify="size = $event" />
+        <resize-observer ref="resizeObserver" @notify="size = $event"/>
     </div>
 </template>
 
@@ -52,9 +52,18 @@
             config() {
                 return this.$store.state.gameState.config[this.name]
             },
-            overlap() {
+            overlapWidth() {
                 const cardWidth = this.$store.state.cardSize.width;
-                const overlap = (this.numCardElements * cardWidth - this.size.width) / ((this.numCardElements - 1) * cardWidth)
+                const overlap =
+                    (this.numCardElements * cardWidth - this.size.width) /
+                    ((this.numCardElements - 1) * cardWidth)
+                return Math.max(overlap, 0.5)
+            },
+            overlapHeight() {
+                const cardWidth = this.$store.state.cardSize.width;
+                const overlap =
+                    (this.numCardElements * cardWidth - this.size.height) /
+                    ((this.numCardElements - 1) * cardWidth)
                 return Math.max(overlap, 0.5)
             },
         },
@@ -102,6 +111,7 @@
             }
         },
         mounted() {
+            this.$refs.resizeObserver.compareAndNotify()
             const draggableElement = this.$refs.cardContainer.$el
             this.numCardElements = draggableElement.childElementCount
             this.$el.addEventListener(
@@ -123,6 +133,7 @@
     .wrapper {
         position: relative;
     }
+
     .wrapper, .card-container {
         width: 100%;
         height: 100%

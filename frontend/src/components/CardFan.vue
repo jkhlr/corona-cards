@@ -46,12 +46,12 @@
     }
 
     .card-fan >>> .card {
-        margin-right: calc(-1 * var(--card-width) * var(--overlap));
+        margin-right: calc(-1 * var(--card-width) * var(--overlap-width));
         width: var(--card-width);
         height: var(--card-height);
     }
 
     .card-fan >>> .card:first-child {
-        margin-left: calc(-1 * var(--card-width) * var(--overlap));
+        margin-left: calc(-1 * var(--card-width) * var(--overlap-width));
     }
 </style>
