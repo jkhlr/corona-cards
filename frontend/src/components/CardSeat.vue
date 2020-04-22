@@ -2,33 +2,29 @@
     <div
             class="card-seat"
             :class="{
-                highlighted: showStash && isStashHighlighted || !showStash && isHighlighted,
+                highlighted: isStashShown && isStashHighlighted || !isStashShown && isHighlighted,
                 [orientation]: true
             }"
     >
         <span class="border-text player-name">NAME</span>
-        <card-container v-if="showStash" :name="stashName" :display="`fan ${orientation}`"/>
-        <card-container v-else :name="name" :display="`fan ${orientation}`"/>
-        <span class="border-text stash-toggle" v-if="hasStash" @click="showStash = !showStash">
-            <a :class="{active: showStash}">stash</a>
+        <card-container v-if="isStashShown" :slug="stashSlug"   :display="`fan ${orientation}`"/>
+        <card-container v-else              :slug="slug"        :display="`fan ${orientation}`"/>
+        <span class="border-text stash-toggle" v-if="hasStash" @click="toggleStash">
+            <a :class="{active: isStashShown}">stash</a>
             <span> | </span>
-            <a :class="{active: !showStash}">hand</a>
+            <a :class="{active: !isStashShown}">hand</a>
         </span>
     </div>
 </template>
 
 <script>
     import CardContainer from "@/components/CardContainer";
+    import {mapMutations} from "vuex";
 
     export default {
         name: "CardSeat",
-        data() {
-            return {
-                showStash: false
-            }
-        },
         props: {
-            name: {
+            slug: {
                 type: String,
                 required: true
             },
@@ -39,17 +35,25 @@
         },
         computed: {
             isHighlighted() {
-                return this.$store.getters.lastMoveFromSlug === this.name
+                return this.$store.getters.lastMoveFromSlug === this.slug
             },
-            stashName() {
-                const [_, seatNumber] = this.name.split('-')
+            hasStash() {
+                return this.$store.getters.hasStash(this.slug)
+            },
+            isStashShown() {
+                return this.$store.getters.isStashShown(this.slug) === true
+            },
+            stashSlug() {
+                const [_, seatNumber] = this.slug.split('-')
                 return `stash-${seatNumber}`
             },
             isStashHighlighted() {
-                return this.$store.getters.lastMoveFromSlug === this.stashName
+                return this.$store.getters.lastMoveFromSlug === this.stashSlug
             },
-            hasStash() {
-                return this.$store.state.gameState.config.hasOwnProperty(this.stashName)
+        },
+        methods: {
+            toggleStash() {
+                this.$store.commit('toggleStash', this.slug)
             }
         },
         components: {

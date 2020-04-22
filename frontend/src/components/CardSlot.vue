@@ -1,6 +1,14 @@
 <template>
-    <div class="card-slot" :class="{highlighted: isHighlighted, [display]: true}">
-        <card-container :name="name" :display="display"/>
+    <div
+            class="card-slot"
+            :class="{
+                highlighted: isHighlighted,
+                narrow: config.display === 'stack',
+                wide: config.display === 'fan'
+            }"
+    >
+        <card-container :slug="slug" :display="config.display"/>
+        <span class="border-text">{{config.name}}</span>
     </div>
 </template>
 
@@ -10,17 +18,17 @@
     export default {
         name: "CardSlot",
         props: {
-            name: {
+            slug: {
                 type: String,
                 required: true
             }
         },
         computed: {
             isHighlighted() {
-                return this.$store.getters.lastMoveFromSlug === this.name
+                return this.$store.getters.lastMoveFromSlug === this.slug
             },
-            display() {
-                return this.$store.state.gameState.config[this.name].display
+            config() {
+                return this.$store.state.gameState.config[this.slug]
             }
         },
         components: {
@@ -35,20 +43,31 @@
         padding: var(--card-container-padding);
 
         height: var(--card-height);
-        display: flex
+        display: flex;
+        position: relative;
     }
 
     .card-slot.highlighted {
         box-shadow: 0 0 3px 1px brown;
     }
 
-    .card-slot.stack {
-        margin: 4px calc(4px + var(--card-width)/2);
+    .card-slot.narrow {
+        margin: 4px calc(4px + var(--card-width) / 2);
         width: var(--card-width);
     }
 
-    .card-slot.fan {
+    .card-slot.wide {
         margin: 4px;
         width: calc(2 * var(--card-width));
+    }
+
+    .card-slot .border-text {
+        font-size: 12px;
+        line-height: 10px;
+        position: absolute;
+        background: darkseagreen;
+        padding: 0 3px;
+        bottom: -5px;
+        right: 10px;
     }
 </style>

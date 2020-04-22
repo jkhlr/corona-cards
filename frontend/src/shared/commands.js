@@ -1,4 +1,5 @@
 import {Table} from "./table";
+import {getInitialGameState, GAME_DEFINITIONS} from "./game";
 
 class MoveCard {
     constructor(cardId, fromSlug, toSlug, newIndex) {
@@ -12,7 +13,7 @@ class MoveCard {
         const table = new Table(gameState);
         table.moveCard(this.cardId, this.fromSlug, this.toSlug, this.newIndex);
         const cards = table.getCards();
-        return {...gameState, cards}
+        return {config: gameState.config, cards}
     }
 
     isValid(gameState) {
@@ -21,6 +22,20 @@ class MoveCard {
     }
 }
 
-export {MoveCard}
+class StartGame {
+    constructor(gameId) {
+        this.gameId = gameId;
+    }
+
+    apply() {
+        return getInitialGameState(this.gameId)
+    }
+
+    isValid() {
+        return this.gameId in GAME_DEFINITIONS
+    }
+}
+
+export {MoveCard, StartGame}
 
 

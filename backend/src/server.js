@@ -1,113 +1,40 @@
 import express from 'express'
 import http from 'http'
 import socketio from 'socket.io'
-import {MoveCard} from "./commands";
-import {ValidationError} from "./utils";
+import {MoveCard, StartGame} from "./commands";
 
 const app = express();
 const server = http.createServer(app);
 const io = socketio(server, {path: '/ws/socket.io'});
 
-function shuffleArray(a) {
-    for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-}
-
-const NUMBERS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-const SUITS = ['D', 'H', 'S', 'C'];
-
-const POKER_CARDS = () => {
-    let i = 0;
-    return SUITS.flatMap(suit => NUMBERS.map(number => ({face: number + suit, id: i++})));
-};
-const SKAT_CARDS = () => {
-    let i = 0;
-    return SUITS.flatMap(suit => NUMBERS.slice(5).map(number => ({face: number + suit, id: i++})));
-};
-
-const SKAT_GAME = () =>
-    getInitialGameState(
-        3,
-        [
-            {isOpen: false, maxCards: null, canMove: 'last', display: 'stack'},
-            {isOpen: false, maxCards: 2, canMove: 'all', display: 'fan'},
-            {isOpen: true, maxCards: 3, canMove: 'last', display: 'fan'}
-        ],
-        'skat',
-        true,
-        true
-    );
-
-const UNO_GAME = () =>
-    getInitialGameState(
-        4,
-        [
-            {isOpen: false, maxCards: null, canMove: 'last', display: 'stack'},
-            {isOpen: true, maxCards: null, canMove: 'last', display: 'fan'}
-        ],
-        'poker',
-        true,
-        false
-    );
-
-function getInitialGameState(numSeats, slotDescriptions, cardType, shuffle, stash) {
-    const seatCardEntries = [...Array(numSeats).keys()].map(i => [`seat-${i}`, []]);
-    const stashCardEntries = stash ? [...Array(numSeats).keys()].map(i => [`stash-${i}`, []]) : []
-    const slotCardEntries = slotDescriptions.map((_, i) => [`slot-${i}`, []]);
-
-    const cards = Object.fromEntries(seatCardEntries.concat(stashCardEntries).concat(slotCardEntries));
-
-    const seatConfigEntries = [...Array(numSeats).keys()].map(
-        i =>
-            [`seat-${i}`, {isOpen: false, maxCards: null, canMove: 'all'}]
-    );
-    const stashConfigEntries = stash ? [...Array(numSeats).keys()].map(
-        i =>
-            [`stash-${i}`, {isOpen: true, maxCards: null, canMove: 'all'}]
-    ) : []
-    const slotConfigEntries = slotDescriptions.map((description, i) => [`slot-${i}`, {...description}]);
-    const config = Object.fromEntries(seatConfigEntries.concat(stashConfigEntries).concat(slotConfigEntries));
-
-    if (cardType === 'skat') {
-        cards['slot-0'] = SKAT_CARDS()
-    } else if (cardType === 'poker') {
-        cards['slot-0'] = POKER_CARDS()
-    }
-    if (shuffle) {
-        shuffleArray(cards['seat-0'])
-    }
-    return {cards, config};
-}
-
-function validateMoveRequest(moveRequest, state) {
-    const move = parseMove(moveRequest);
-    if (move.isValid(state)) {
-        return move
-    }
-    throw new ValidationError(`Invalid move`)
-}
-
-function parseMove(moveRequest) {
-    if (moveRequest.command === 'move') {
-        const cardId = moveRequest.args.cardId;
-        const fromSlug = moveRequest.args.fromSlug;
-        const toSlug = moveRequest.args.toSlug;
-        const newIndex = moveRequest.args.newIndex;
-        return new MoveCard(cardId, fromSlug, toSlug, newIndex)
-    } else {
-        throw new ValidationError(`Invalid command: ${moveRequest.command}`)
+class ValidationError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "ValidationError";
     }
 }
 
-let gameState = SKAT_GAME();
-let moveHistory = [];
-const seatMap = new Map();
+function validateCommandRequest(commandRequest, state) {
+    const command = parseCommandRequest(commandRequest);
+    if (command.isValid(state)) {
+        return command
+    }
+    throw new ValidationError(`Invalid command.`)
+}
+
+function parseCommandRequest(commandRequest) {
+    if (commandRequest.command === 'move') {
+        const {cardId, fromSlug, toSlug, newIndex} = commandRequest.args;
+        return new MoveCard(cardId, fromSlug, toSlug, newIndex);
+    } else if (commandRequest.command === 'start') {
+        const {gameId} = commandRequest.args;
+        return new StartGame(gameId);
+    }
+    throw new ValidationError(`Invalid command request: ${commandRequest.command}`);
+}
 
 function getGameStateFor(socket) {
-    // TODO: history might leak redacted game state through move description!
+    // TODO: move history might leak redacted game state through move description!
     const seatNumber = seatMap.get(socket.id).seatNumber;
     const cards = Object.fromEntries(
         Object.entries(gameState.cards).map(
@@ -121,6 +48,11 @@ function getGameStateFor(socket) {
     );
     return {...gameState, cards}
 }
+
+const startGame = new StartGame('SKAT')
+let gameState = startGame.apply()
+let moveHistory = [];
+const seatMap = new Map();
 
 io.on('connection', (socket) => {
     console.log(`Socket ${socket.id} connected`);
@@ -145,16 +77,16 @@ io.on('connection', (socket) => {
         socket.emit('stateUpdate', {gameState: getGameStateFor(socket), moveHistory});
     });
 
-    socket.on('requestMove', (moveRequest) => {
+    socket.on('requestMove', (commandRequest) => {
         console.log(`Requested move by socket ${socket.id}:`);
-        console.log(moveRequest);
+        console.log(commandRequest);
 
         try {
-            const move = validateMoveRequest(moveRequest, gameState);
-            gameState = move.apply(gameState);
-            moveHistory = [...moveHistory, moveRequest];
+            const command = validateCommandRequest(commandRequest, gameState);
+            gameState = command.apply(gameState);
+            moveHistory = [...moveHistory, commandRequest];
             socket.emit('confirmMove', {
-                move: moveRequest,
+                move: commandRequest,
                 gameState: getGameStateFor(socket),
                 moveHistory
             });
@@ -165,7 +97,7 @@ io.on('connection', (socket) => {
             otherSockets.forEach(
                 otherSocket =>
                     otherSocket.emit('remoteMove', {
-                        move: moveRequest,
+                        move: commandRequest,
                         gameState: getGameStateFor(otherSocket),
                         moveHistory
                     })
@@ -173,7 +105,7 @@ io.on('connection', (socket) => {
         } catch (err) {
             if (err instanceof ValidationError) {
                 socket.emit('rejectMove', {
-                    move: moveRequest,
+                    move: commandRequest,
                     error: err.message,
                     gameState: getGameStateFor(socket),
                     moveHistory
@@ -189,3 +121,4 @@ io.on('connection', (socket) => {
 server.listen(8000, () => {
     console.log('listening on *:8000');
 });
+

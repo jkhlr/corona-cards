@@ -48,7 +48,6 @@ class CardContainer {
 
     removeCard(cardId) {
         const movingCard = this.cardIdMap.get(cardId);
-        console.log(movingCard);
         this.cards = this.cards.filter(card => card.id !== cardId);
         return movingCard
     }

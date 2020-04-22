@@ -1,18 +1,19 @@
 <template>
     <div class="table" :style="`--card-width: ${cardSize.width}px; --card-height: ${cardSize.height}px`">
         <card-seat
-                v-for="seat in seatConfig"
-                :class="`${seat.position}-seat`"
-                :orientation="seat.orientation"
-                :name="seat.name"
-                :key="seat.name"
+                v-for="config in seatConfig"
+                v-bind="config"
+                :class="`${config.position}-seat`"
+                :key="config.slug"
         />
         <div class="slots">
-            <div class="seat-switch" @click="switchSeat">
-                <span>x</span>
-            </div>
-            <card-slot v-for="slot in slotConfig" :name="slot.name" :key="slot.name"/>
+            <card-slot
+                    v-for="config in slotConfig"
+                    v-bind="config"
+                    :key="config.slug"
+            />
         </div>
+        <div class="seat-switch" @click="switchSeat"><span>x</span></div>
     </div>
 </template>
 
@@ -32,7 +33,7 @@
         computed: {
             seatConfig() {
                 if (this.numSeats > 4) {
-                    throw TypeError(`Invalid number of seats: ${this.numSeats}`)
+                    throw new TypeError(`Invalid number of seats: ${this.numSeats}`)
                 }
 
                 let seatSlugs = Object.keys(this.gameState.cards).filter(key => key.startsWith('seat-'));
@@ -41,7 +42,7 @@
                     const currentSeatSlugIndex = seatSlugs.indexOf(currentSeatSlug);
                     seatSlugs = seatSlugs.slice(currentSeatSlugIndex).concat(seatSlugs.slice(0, currentSeatSlugIndex));
                 }
-                return seatSlugs.map((slug, i) => ({name: slug, ...this.seatOrientations[i]}));
+                return seatSlugs.map((slug, i) => ({slug, ...this.seatOrientations[i]}));
             },
             seatOrientations() {
                 const [bottom, left, top, right] = [
@@ -75,7 +76,7 @@
             },
             slotConfig() {
                 const slotSlugs = Object.keys(this.gameState.cards).filter(key => key.startsWith('slot-'));
-                return slotSlugs.map(slug => ({name: slug}))
+                return slotSlugs.map(slug => ({slug}))
             },
             ...mapState([
                 'gameState',
@@ -129,9 +130,9 @@
             ,
             switchSeat() {
                 if (this.currentSeatNumber === null) {
-                    this.takeSeat({seatNumber: 0})
+                    this.takeSeat(0)
                 } else {
-                    this.takeSeat({seatNumber: (this.currentSeatNumber + 1) % this.numSeats});
+                    this.takeSeat((this.currentSeatNumber + 1) % this.numSeats);
                 }
             }
             ,

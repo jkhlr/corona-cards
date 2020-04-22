@@ -17,9 +17,16 @@ export default new Vuex.Store({
         cardSize: {
             width: 50,
             height: 90
-        }
+        },
+        isStashShown: {}
     },
     getters: {
+        checkMove(state) {
+            return ({cardId, fromSlug, toSlug, newIndex}) => {
+                const command = new MoveCard(cardId, fromSlug, toSlug, newIndex);
+                return command.isValid(state.gameState)
+            }
+        },
         lastMove(state) {
             return state.moveHistory.filter(move => move.command === 'move').pop()
         },
@@ -49,11 +56,11 @@ export default new Vuex.Store({
         numSeats(state) {
             return Object.keys(state.gameState.cards).filter(key => key.startsWith('seat-')).length
         },
-        checkMove(state) {
-            return ({cardId, fromSlug, toSlug, newIndex}) => {
-                const command = new MoveCard(cardId, fromSlug, toSlug, newIndex);
-                return command.isValid(state.gameState)
-            }
+        hasStash(state) {
+            return seatSlug => state.gameState.config.hasOwnProperty(seatSlug)
+        },
+        isStashShown(state) {
+            return seatSlug => state.isStashShown[seatSlug]
         }
     },
     mutations: {
@@ -70,9 +77,15 @@ export default new Vuex.Store({
                 args: {cardId, fromSlug, toSlug, newIndex}
             })
         },
-        takeSeat(state, {seatNumber}) {
+        takeSeat(state, seatNumber) {
             state.currentSeatNumber = seatNumber;
             socket.emit('takeSeat', seatNumber);
+        },
+        toggleStash(state, seatSlug) {
+            state.isStashShown = {
+                ...state.isStashShown,
+                [seatSlug]: state.isStashShown[seatSlug] ? undefined : true
+            }
         }
     }
 });

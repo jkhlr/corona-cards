@@ -41,7 +41,7 @@
             }
         },
         props: {
-            name: {
+            slug: {
                 type: String,
                 required: true
             },
@@ -52,10 +52,10 @@
         },
         computed: {
             cards() {
-                return this.$store.state.gameState.cards[this.name]
+                return this.$store.state.gameState.cards[this.slug]
             },
             config() {
-                return this.$store.state.gameState.config[this.name]
+                return this.$store.state.gameState.config[this.slug]
             },
             cardWidth() {
                 return this.$store.state.cardSize.width;
@@ -69,7 +69,7 @@
             componentData() {
                 return {
                     attrs: {
-                        name: this.name,
+                        slug: this.slug,
                         style: `--overlap-width: ${this.overlapWidth}; --overlap-height: ${this.overlapHeight}`
                     }
                 }
@@ -86,16 +86,16 @@
                 return false
             },
             endDrag({from, to, item, oldIndex, newIndex}) {
-                const fromSlug = from.attributes['name'].value;
-                const toSlug = to.attributes['name'].value;
+                const fromSlug = from.attributes['slug'].value;
+                const toSlug = to.attributes['slug'].value;
                 const cardId = parseInt(item.attributes['card-id'].value)
                 if (fromSlug !== toSlug || oldIndex !== newIndex) {
                     this.$store.commit('moveCard', {cardId, fromSlug, toSlug, newIndex});
                 }
             },
             checkDrag({from, to, dragged, draggedContext: {index: oldIndex, futureIndex: newIndex}}) {
-                const fromSlug = from.attributes['name'].value;
-                const toSlug = to.attributes['name'].value;
+                const fromSlug = from.attributes['slug'].value;
+                const toSlug = to.attributes['slug'].value;
                 const cardId = parseInt(dragged.attributes['card-id'].value)
                 if (fromSlug === toSlug && oldIndex === newIndex) {
                     return true
@@ -103,14 +103,23 @@
                 return this.$store.getters.checkMove({cardId, fromSlug, toSlug, newIndex});
             },
             clickCard(cardId) {
-                const currentSeatSlug = `seat-${this.$store.state.currentSeatNumber}`;
-                const fromSlug = this.name;
+                const currentSeatNumber = this.$store.state.currentSeatNumber
+                const currentSeatSlug = `seat-${currentSeatNumber}`;
+                const currentStashSlug = `stash-${currentSeatNumber}`;
+                const isCurrentStashShown = this.$store.getters.isStashShown(currentSeatSlug)
+                const fromSlug = this.slug;
                 const newIndex = null;
                 let toSlug;
-                if (this.name === currentSeatSlug) {
-                    toSlug = this.$store.getters.firstOpenSlotSlug;
-                } else if (this.name.startsWith('slot-') && this.$store.state.currentSeatNumber != null) {
-                    toSlug = currentSeatSlug;
+                if (this.slug === currentSeatSlug) {
+                    toSlug = this.$store.getters.firstOpenSlotSlug
+                } else if (this.slug.startsWith('slot-') && currentSeatNumber !== null) {
+                    if (isCurrentStashShown) {
+                        toSlug = currentStashSlug
+                    } else {
+                        toSlug = currentSeatSlug;
+                    }
+                } else if (this.slug.startsWith('stash-')) {
+                    // TODO: Flip card
                 }
                 if (toSlug && this.$store.getters.checkMove({cardId, fromSlug, toSlug, newIndex})) {
                     this.$store.commit('moveCard', {cardId, fromSlug, toSlug, newIndex});
