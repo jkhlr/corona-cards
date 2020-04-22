@@ -1,16 +1,17 @@
 <template>
-    <div class="wrapper" :style="`--overlap-width: ${overlapWidth}; --overlap-height: ${overlapHeight}`">
+    <div class="card-container">
         <vue-draggable
-                ref="cardContainer"
-                class="card-container"
+                ref="cards"
+                class="cards"
+                :class="display"
                 :value="cards"
                 @end="endDrag"
                 :move="checkDrag"
                 group="cards"
                 filter=".non-movable"
-                :delay="50"
+                :delay="125"
                 :delayOnTouchOnly="true"
-                :componentData="{attrs: {name: this.name}}"
+                :componentData="componentData"
         >
             <card
                     v-for="(card, i) in cards"
@@ -33,14 +34,18 @@
         data() {
             return {
                 size: {
-                    width: null,
-                    height: null
+                    width: undefined,
+                    height: undefined
                 },
-                numCardElements: null
+                numCardElements: undefined
             }
         },
         props: {
             name: {
+                type: String,
+                required: true
+            },
+            display: {
                 type: String,
                 required: true
             }
@@ -52,20 +57,23 @@
             config() {
                 return this.$store.state.gameState.config[this.name]
             },
+            cardWidth() {
+                return this.$store.state.cardSize.width;
+            },
             overlapWidth() {
-                const cardWidth = this.$store.state.cardSize.width;
-                const overlap =
-                    (this.numCardElements * cardWidth - this.size.width) /
-                    ((this.numCardElements - 1) * cardWidth)
-                return Math.max(overlap, 0.5)
+                return this.calculateOverlap(this.size.width, this.cardWidth, this.numCardElements)
             },
             overlapHeight() {
-                const cardWidth = this.$store.state.cardSize.width;
-                const overlap =
-                    (this.numCardElements * cardWidth - this.size.height) /
-                    ((this.numCardElements - 1) * cardWidth)
-                return Math.max(overlap, 0.5)
+                return this.calculateOverlap(this.size.height, this.cardWidth, this.numCardElements)
             },
+            componentData() {
+                return {
+                    attrs: {
+                        name: this.name,
+                        style: `--overlap-width: ${this.overlapWidth}; --overlap-height: ${this.overlapHeight}`
+                    }
+                }
+            }
         },
         methods: {
             movable(index) {
@@ -89,7 +97,6 @@
                 const fromSlug = from.attributes['name'].value;
                 const toSlug = to.attributes['name'].value;
                 const cardId = parseInt(dragged.attributes['card-id'].value)
-                console.log(fromSlug, toSlug, cardId)
                 if (fromSlug === toSlug && oldIndex === newIndex) {
                     return true
                 }
@@ -108,19 +115,28 @@
                 if (toSlug && this.$store.getters.checkMove({cardId, fromSlug, toSlug, newIndex})) {
                     this.$store.commit('moveCard', {cardId, fromSlug, toSlug, newIndex});
                 }
+            },
+            calculateOverlap(containerSize, elementSize, numElements) {
+                const overlap = (numElements * elementSize - containerSize) / ((numElements - 1) * elementSize)
+                if (Number.isNaN(overlap)) {
+                    return 1
+                } else if (overlap < 0.5) {
+                    return 0.5
+                }
+                return overlap
             }
         },
         mounted() {
             this.$refs.resizeObserver.compareAndNotify()
-            const draggableElement = this.$refs.cardContainer.$el
-            this.numCardElements = draggableElement.childElementCount
+            const cards = this.$refs.cards.$el
+            this.numCardElements = cards.childElementCount
             this.$el.addEventListener(
                 'DOMNodeInserted',
-                () => this.numCardElements = draggableElement.childElementCount
+                () => this.numCardElements = cards.childElementCount
             )
             this.$el.addEventListener(
                 'DOMNodeRemoved',
-                () => this.numCardElements = draggableElement.childElementCount - 1
+                () => this.numCardElements = cards.childElementCount - 1
             )
         },
         components: {
@@ -130,12 +146,58 @@
     };
 </script>
 <style scoped>
-    .wrapper {
+    .card-container {
         position: relative;
-    }
-
-    .wrapper, .card-container {
         width: 100%;
         height: 100%
+    }
+
+    .cards {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+
+        --overlap-width: 1;
+        --overlap-height: 1;
+    }
+
+    .cards.stack .card {
+        width: var(--card-width);
+        height: var(--card-height);
+        margin-right: calc(-1 * var(--card-width));
+    }
+
+    .cards.stack .card:first-child {
+        margin-left: calc(-1 * var(--card-width));
+    }
+
+    .cards.fan:not(.vertical) .card {
+        width: var(--card-width);
+        height: var(--card-height);
+        margin-right: calc(-1 * var(--card-width) * var(--overlap-width));
+    }
+
+    .cards.fan:not(.vertical) .card:first-child {
+        margin-left: calc(-1 * var(--card-width) * var(--overlap-width));
+    }
+
+    .cards.fan.vertical {
+        flex-direction: column;
+    }
+
+    .cards.fan.vertical .card {
+        width: var(--card-height);
+        height: var(--card-width);
+        margin-bottom: calc(-1 * var(--card-width) * var(--overlap-height));
+    }
+
+    .cards.fan.vertical .card:first-child {
+        margin-top: calc(-1 * var(--card-width) * var(--overlap-height));
+    }
+
+    .cards.fan.vertical .card >>> img {
+        transform: rotate(90deg);
+        transform-origin: calc(var(--card-height) / 2) calc(var(--card-height) / 2);
     }
 </style>

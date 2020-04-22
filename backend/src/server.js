@@ -32,8 +32,9 @@ const SKAT_GAME = () =>
     getInitialGameState(
         3,
         [
-            {isOpen: false, maxCards: null, canMove: 'last'},
-            {isOpen: true, maxCards: null, canMove: 'last'}
+            {isOpen: false, maxCards: null, canMove: 'last', display: 'stack'},
+            {isOpen: false, maxCards: 2, canMove: 'all', display: 'fan'},
+            {isOpen: true, maxCards: 3, canMove: 'last', display: 'fan'}
         ],
         'skat',
         true,
@@ -44,8 +45,8 @@ const UNO_GAME = () =>
     getInitialGameState(
         4,
         [
-            {isOpen: false, maxCards: null, canMove: 'last'},
-            {isOpen: true, maxCards: null, canMove: 'last'}
+            {isOpen: false, maxCards: null, canMove: 'last', display: 'stack'},
+            {isOpen: true, maxCards: null, canMove: 'last', display: 'fan'}
         ],
         'poker',
         true,

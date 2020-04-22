@@ -1,6 +1,6 @@
 <template>
-    <div class="card-stack" :class="{highlighted: isHighlighted}">
-        <card-container :name="name" />
+    <div class="card-slot" :class="{highlighted: isHighlighted, [display]: true}">
+        <card-container :name="name" :display="display"/>
     </div>
 </template>
 
@@ -8,7 +8,7 @@
     import CardContainer from "@/components/CardContainer";
 
     export default {
-        name: "CardStack",
+        name: "CardSlot",
         props: {
             name: {
                 type: String,
@@ -18,6 +18,9 @@
         computed: {
             isHighlighted() {
                 return this.$store.getters.lastMoveFromSlug === this.name
+            },
+            display() {
+                return this.$store.state.gameState.config[this.name].display
             }
         },
         components: {
@@ -26,35 +29,26 @@
     };
 </script>
 <style scoped>
-    .card-stack {
+    .card-slot {
         border-radius: 5px;
-        margin: 4px;
         border: var(--card-container-border) solid white;
         padding: var(--card-container-padding);
 
         height: var(--card-height);
-        width: var(--card-width);
         display: flex
     }
 
-    .card-stack.highlighted {
+    .card-slot.highlighted {
         box-shadow: 0 0 3px 1px brown;
     }
 
-    .card-stack >>> .card-container {
-        flex-grow: 1;
-        display: flex;
-        justify-content: center;
-    }
-
-    .card-stack >>> .card {
+    .card-slot.stack {
+        margin: 4px calc(4px + var(--card-width)/2);
         width: var(--card-width);
-        height: var(--card-height);
-        margin-right: calc(var(--card-width) / -1);
     }
 
-    .card-stack >>> .card:first-child {
-        margin-left: calc(var(--card-width) / -1);
+    .card-slot.fan {
+        margin: 4px;
+        width: calc(2 * var(--card-width));
     }
-
 </style>

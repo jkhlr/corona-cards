@@ -11,26 +11,13 @@
             <div class="seat-switch" @click="switchSeat">
                 <span>x</span>
             </div>
-            <div v-if="false">
-                <card-stack
-                        v-for="slot in slotConfig"
-                        :name="slot.name"
-                        :key="slot.name"
-                />
-            </div>
-
-            <card-fan
-                    v-for="slot in slotConfig"
-                    :name="slot.name"
-                    :key="slot.name"
-            />
+            <card-slot v-for="slot in slotConfig" :name="slot.name" :key="slot.name"/>
         </div>
     </div>
 </template>
 
 <script>
-    import CardStack from "@/components/CardStack";
-    import CardFan from "@/components/CardFan";
+    import CardSlot from "@/components/CardSlot";
     import CardSeat from "@/components/CardSeat";
     import {mapGetters, mapMutations, mapState} from "vuex";
 
@@ -54,15 +41,7 @@
                     const currentSeatSlugIndex = seatSlugs.indexOf(currentSeatSlug);
                     seatSlugs = seatSlugs.slice(currentSeatSlugIndex).concat(seatSlugs.slice(0, currentSeatSlugIndex));
                 }
-
-                const cards = seatSlugs.map(slug => this.gameState.cards[slug]);
-                return seatSlugs.map(
-                    (slug, i) => ({
-                        name: slug,
-                        cards: cards[i],
-                        ...this.seatOrientations[i]
-                    })
-                );
+                return seatSlugs.map((slug, i) => ({name: slug, ...this.seatOrientations[i]}));
             },
             seatOrientations() {
                 const [bottom, left, top, right] = [
@@ -95,22 +74,8 @@
                 }
             },
             slotConfig() {
-                const cards = Object.fromEntries(Object.entries(this.gameState.cards).filter(([key]) => key.startsWith('slot-')));
-                if (Object.keys(cards).length === 2) {
-                    return [
-                        {
-                            cards: cards['slot-0'],
-                            name: 'slot-0',
-                            position: 'left'
-                        },
-                        {
-                            cards: cards['slot-1'],
-                            name: 'slot-1',
-                            position: 'right',
-                        },
-                    ]
-                }
-                return []
+                const slotSlugs = Object.keys(this.gameState.cards).filter(key => key.startsWith('slot-'));
+                return slotSlugs.map(slug => ({name: slug}))
             },
             ...mapState([
                 'gameState',
@@ -187,8 +152,7 @@
         }
         ,
         components: {
-            CardStack,
-            CardFan,
+            CardSlot,
             CardSeat
         }
     }
