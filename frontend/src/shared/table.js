@@ -21,6 +21,16 @@ class Table {
         to.addCardAt(movingCard, index);
     }
 
+    canFlipCard(cardId, containerSlug) {
+        const container = this.cardContainers[containerSlug];
+        return container.canFlipCard(cardId);
+    }
+
+    flipCard(cardId, containerSlug) {
+        const container = this.cardContainers[containerSlug];
+        return container.flipCard(cardId);
+    }
+
     getCards() {
         return Object.fromEntries(
             Object.entries(this.cardContainers).map(
@@ -62,6 +72,11 @@ class CardContainer {
         this.cards = this.cards.slice(0, index).concat([card]).concat(this.cards.slice(index));
     }
 
+    flipCard(cardId) {
+        const card = this.cardIdMap.get(cardId)
+        card.flipped = !card.flipped
+    }
+
     canRemoveCard(cardId) {
         if (this.config.canMove === 'all') {
             return this.cardIdMap.has(cardId)
@@ -86,6 +101,16 @@ class CardContainer {
             return false
         }
         return this.config.maxCards === null || this.cards.length < this.config.maxCards
+    }
+
+    canFlipCard(cardId) {
+        if (this.config.canFlip === 'all') {
+            return this.cardIdMap.has(cardId)
+        }
+        if (this.config.canFlip === 'last') {
+            return this.indexIdMap.get(cardId) === this.cards.length - 1
+        }
+        return false
     }
 }
 

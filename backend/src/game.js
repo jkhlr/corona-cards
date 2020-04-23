@@ -4,11 +4,27 @@ const SUITS = ['D', 'H', 'S', 'C'];
 const CARDS = {
     'SKAT': (() => {
         let i = 0;
-        return SUITS.flatMap(suit => NUMBERS.slice(5).map(number => ({face: number + suit, id: i++})));
+        return SUITS.flatMap(
+            suit => NUMBERS.slice(5).map(
+                number => ({
+                    face: number + suit,
+                    id: i++,
+                    flipped: false
+                })
+            )
+        );
     })(),
     'POKER': (() => {
         let i = 0;
-        return SUITS.flatMap(suit => NUMBERS.map(number => ({face: number + suit, id: i++})));
+        return SUITS.flatMap(
+            suit => NUMBERS.map(
+                number => ({
+                    face: number + suit,
+                    id: i++,
+                    flipped: false
+                })
+            )
+        );
     })()
 }
 
@@ -16,8 +32,24 @@ const GAME_DEFINITIONS = {
     'SKAT': {
         numSeats: 3,
         slotDescriptions: [
-            {isOpen: false, maxCards: 2, canMove: 'all', display: 'fan', name: 'Skat', initialCards: 2},
-            {isOpen: true, maxCards: 3, canMove: 'last', display: 'fan', name: 'Stich', initialCards: 0}
+            {
+                isOpen: false,
+                maxCards: 2,
+                canMove: 'all',
+                canFlip: 'none',
+                display: 'fan',
+                name: 'Skat',
+                initialCards: 2
+            },
+            {
+                isOpen: true,
+                maxCards: 3,
+                canMove: 'last',
+                canFlip: 'none',
+                display: 'fan',
+                name: 'Stich',
+                initialCards: 0
+            }
         ],
         cardType: 'SKAT',
         stash: 'closed',
@@ -25,8 +57,24 @@ const GAME_DEFINITIONS = {
     'UNO': {
         numSeats: 4,
         slotDescriptions: [
-            {isOpen: false, maxCards: null, canMove: 'last', display: 'stack', name: 'draw', initialCards: 52},
-            {isOpen: true, maxCards: null, canMove: 'last', display: 'stack', name: 'next', initialCards: 0}
+            {
+                isOpen: false,
+                maxCards: null,
+                canMove: 'last',
+                canFlip: 'none',
+                display: 'stack',
+                name: 'draw',
+                initialCards: 52
+            },
+            {
+                isOpen: true,
+                maxCards: null,
+                canMove: 'last',
+                canFlip: 'none',
+                display: 'stack',
+                name: 'next',
+                initialCards: 0
+            }
         ],
         cardType: 'POKER',
         stash: false
@@ -66,11 +114,11 @@ function getInitialGameState(gameId) {
         config[`slot-${i}`] = {...description}
     }
     for (let i of Array(numSeats).keys()) {
-        config[`seat-${i}`] = {isOpen: false, maxCards: null, canMove: 'all'}
+        config[`seat-${i}`] = {isOpen: false, maxCards: null, canMove: 'all', canFlip: 'none'}
         if (stash === 'open') {
-            config[`stash-${i}`] = {isOpen: true, maxCards: null, canMove: 'all'}
+            config[`stash-${i}`] = {isOpen: true, maxCards: null, canMove: 'all', canFlip: 'none'}
         } else if (stash === 'closed') {
-            config[`stash-${i}`] = {isOpen: false, maxCards: null, canMove: 'all'}
+            config[`stash-${i}`] = {isOpen: false, maxCards: null, canMove: 'all', canFlip: 'all'}
         }
     }
 

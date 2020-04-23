@@ -100,7 +100,7 @@
                 if (fromSlug === toSlug && oldIndex === newIndex) {
                     return true
                 }
-                return this.$store.getters.checkMove({cardId, fromSlug, toSlug, newIndex});
+                return this.$store.getters.canMove({cardId, fromSlug, toSlug, newIndex});
             },
             clickCard(cardId) {
                 const currentSeatNumber = this.$store.state.currentSeatNumber
@@ -109,20 +109,27 @@
                 const isCurrentStashShown = this.$store.getters.isStashShown(currentSeatSlug)
                 const fromSlug = this.slug;
                 const newIndex = null;
-                let toSlug;
                 if (this.slug === currentSeatSlug) {
-                    toSlug = this.$store.getters.firstOpenSlotSlug
+                    const firstOpenSlotSlug = this.$store.getters.firstOpenSlotSlug
+                    this.tryMoveCard({toSlug: firstOpenSlotSlug, cardId, fromSlug, newIndex})
                 } else if (this.slug.startsWith('slot-') && currentSeatNumber !== null) {
                     if (isCurrentStashShown) {
-                        toSlug = currentStashSlug
+                        this.tryMoveCard({toSlug: currentStashSlug, cardId, fromSlug, newIndex})
                     } else {
-                        toSlug = currentSeatSlug;
+                        this.tryMoveCard({toSlug: currentSeatSlug, cardId, fromSlug, newIndex});
                     }
                 } else if (this.slug.startsWith('stash-')) {
-                    // TODO: Flip card
+                    this.tryFlipCard({cardId, containerSlug: this.slug})
                 }
-                if (toSlug && this.$store.getters.checkMove({cardId, fromSlug, toSlug, newIndex})) {
+            },
+            tryMoveCard({cardId, fromSlug, toSlug, newIndex}) {
+                if (this.$store.getters.canMove({cardId, fromSlug, toSlug, newIndex})) {
                     this.$store.commit('moveCard', {cardId, fromSlug, toSlug, newIndex});
+                }
+            },
+            tryFlipCard({cardId, containerSlug}) {
+                if (this.$store.getters.canFlip({cardId, containerSlug})) {
+                    this.$store.commit('flipCard', {cardId, containerSlug});
                 }
             },
             calculateOverlap(containerSize, elementSize, numElements) {

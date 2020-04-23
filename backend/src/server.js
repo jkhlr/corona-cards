@@ -1,7 +1,7 @@
 import express from 'express'
 import http from 'http'
 import socketio from 'socket.io'
-import {MoveCard, StartGame} from "./commands";
+import {MoveCard, StartGame, FlipCard} from "./commands";
 
 const app = express();
 const server = http.createServer(app);
@@ -26,7 +26,12 @@ function parseCommandRequest(commandRequest) {
     if (commandRequest.command === 'move') {
         const {cardId, fromSlug, toSlug, newIndex} = commandRequest.args;
         return new MoveCard(cardId, fromSlug, toSlug, newIndex);
-    } else if (commandRequest.command === 'start') {
+    }
+    if (commandRequest.command === 'flip') {
+        const {cardId, containerSlug} = commandRequest.args
+        return new FlipCard(cardId, containerSlug)
+    }
+    if (commandRequest.command === 'start') {
         const {gameId} = commandRequest.args;
         return new StartGame(gameId);
     }
@@ -34,15 +39,17 @@ function parseCommandRequest(commandRequest) {
 }
 
 function getGameStateFor(socket) {
-    // TODO: move history might leak redacted game state through move description!
     const seatNumber = seatMap.get(socket.id).seatNumber;
     const cards = Object.fromEntries(
         Object.entries(gameState.cards).map(
             ([key, cards]) => {
-                if (key === `seat-${seatNumber}` || gameState.config[key].isOpen) {
+                if (key === `seat-${seatNumber}`) {
                     return [key, cards]
                 }
-                return [key, cards.map(card => ({...card, face: '*'}))];
+                if (gameState.config[key].isOpen) {
+                    return [key, cards.map(card => ({...card, face: card.flipped ? '*' : card.face}))]
+                }
+                return [key, cards.map(card => ({...card, face: card.flipped ? card.face: '*'}))]
             }
         )
     );

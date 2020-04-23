@@ -1,7 +1,7 @@
 import Vue from "vue";
 import Vuex from 'vuex'
 import socket from './socket'
-import {MoveCard} from "./shared/commands";
+import {MoveCard, FlipCard} from "./shared/commands";
 
 Vue.use(Vuex);
 
@@ -21,9 +21,15 @@ export default new Vuex.Store({
         isStashShown: {}
     },
     getters: {
-        checkMove(state) {
+        canMove(state) {
             return ({cardId, fromSlug, toSlug, newIndex}) => {
                 const command = new MoveCard(cardId, fromSlug, toSlug, newIndex);
+                return command.isValid(state.gameState)
+            }
+        },
+        canFlip(state) {
+            return ({cardId, containerSlug}) => {
+                const command = new FlipCard(cardId, containerSlug);
                 return command.isValid(state.gameState)
             }
         },
@@ -75,6 +81,21 @@ export default new Vuex.Store({
             socket.emit('requestMove', {
                 command: 'move',
                 args: {cardId, fromSlug, toSlug, newIndex}
+            })
+        },
+        flipCard(state, {cardId, containerSlug}) {
+            const command = new FlipCard(cardId, containerSlug);
+            state.gameState = command.apply(state.gameState);
+
+            socket.emit('requestMove', {
+                command: 'flip',
+                args: {cardId, containerSlug}
+            })
+        },
+        startGame(state, {gameId}) {
+            socket.emit('requestMove', {
+                command: 'start',
+                args: {gameId}
             })
         },
         takeSeat(state, seatNumber) {

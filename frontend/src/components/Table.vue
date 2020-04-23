@@ -14,6 +14,7 @@
             />
         </div>
         <div class="seat-switch" @click="switchSeat"><span>x</span></div>
+        <div class="skat-start" @click="startSkat"><span>s</span></div>
     </div>
 </template>
 
@@ -93,21 +94,18 @@
                 if (!this.requestingMove) {
                     this.updateState({gameState, moveHistory})
                 }
-            }
-            ,
+            },
             confirmMove({move, gameState, moveHistory}) {
                 console.log(`Move confirmed:`);
                 console.log(move);
                 this.requestingMove = false;
                 this.updateState({gameState, moveHistory})
-            }
-            ,
+            },
             rejectMove({error, gameState, moveHistory}) {
                 console.log(`Move Request rejected: ${error}`);
                 this.requestingMove = false;
                 this.updateState({gameState, moveHistory})
-            }
-            ,
+            },
             remoteMove({move, gameState, moveHistory}) {
                 console.log('Remote move:');
                 console.log(move);
@@ -121,24 +119,25 @@
             getState() {
                 console.log('State update requested');
                 this.$socket.emit('getState');
-            }
-            ,
+            },
             setName(name) {
                 console.log(`Name ${name} set`);
                 this.$socket.emit('setName', name);
-            }
-            ,
+            },
             switchSeat() {
                 if (this.currentSeatNumber === null) {
                     this.takeSeat(0)
                 } else {
                     this.takeSeat((this.currentSeatNumber + 1) % this.numSeats);
                 }
-            }
-            ,
+            },
+            startSkat() {
+                this.startGame({gameId: 'SKAT'})
+            },
             ...mapMutations([
                 'updateState',
-                'takeSeat'
+                'takeSeat',
+                'startGame'
             ])
         }
         ,
@@ -231,7 +230,18 @@
         position: absolute;
         height: 2em;
         width: 2em;
-        top: calc(50% - 1em);
+        top: calc(50% - 2em);
+        left: calc(50% - 1em);
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .skat-start {
+        cursor: pointer;
+        position: absolute;
+        height: 2em;
+        width: 2em;
+        top: calc(50%);
         left: calc(50% - 1em);
         text-align: center;
         font-weight: bold;
