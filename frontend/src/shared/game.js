@@ -122,7 +122,7 @@ function getInitialGameState(gameId) {
         }
     }
 
-    return {cards, config};
+    return {cards, config, gameId};
 }
 
 export {getInitialGameState, GAME_DEFINITIONS}

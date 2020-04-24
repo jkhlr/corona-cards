@@ -13,8 +13,8 @@
                     :key="config.slug"
             />
         </div>
-        <div class="seat-switch" @click="switchSeat"><span>x</span></div>
-        <div class="skat-start" @click="startSkat"><span>s</span></div>
+        <div class="seat-switch" @click="switchSeat"><span>s</span></div>
+        <div class="game-restart" @click="restartGame"><span>r</span></div>
     </div>
 </template>
 
@@ -87,8 +87,7 @@
             ...mapGetters([
                 'numSeats'
             ])
-        }
-        ,
+        },
         sockets: {
             stateUpdate({gameState, moveHistory}) {
                 if (!this.requestingMove) {
@@ -131,8 +130,8 @@
                     this.takeSeat((this.currentSeatNumber + 1) % this.numSeats);
                 }
             },
-            startSkat() {
-                this.startGame({gameId: 'SKAT'})
+            restartGame() {
+                this.startGame({gameId: this.gameState.gameId})
             },
             ...mapMutations([
                 'updateState',
@@ -236,7 +235,7 @@
         font-weight: bold;
     }
 
-    .skat-start {
+    .game-restart {
         cursor: pointer;
         position: absolute;
         height: 2em;

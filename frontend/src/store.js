@@ -10,7 +10,8 @@ export default new Vuex.Store({
     state: {
         gameState: {
             cards: {},
-            config: {}
+            config: {},
+            gameId: null
         },
         moveHistory: [],
         currentSeatNumber: null,
@@ -34,7 +35,7 @@ export default new Vuex.Store({
             }
         },
         lastMove(state) {
-            return state.moveHistory.filter(move => move.command === 'move').pop()
+            return state.moveHistory.filter(move => move.command === 'move').slice(-1).pop()
         },
         lastMoveCardId(state, getters) {
             if (!getters.lastMove) {
