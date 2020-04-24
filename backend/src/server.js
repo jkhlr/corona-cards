@@ -101,7 +101,7 @@ function broadcastStateUpdate() {
     )
 }
 
-const startGame = new StartGame('SKAT')
+const startGame = new StartGame('skat')
 let gameState = startGame.apply()
 let moveHistory = [];
 const playerMap = new PlayerMap()
@@ -115,19 +115,15 @@ io.on('connection', (socket) => {
         broadcastStateUpdate()
     });
 
-    socket.on('requestSeat', (seatNumber) => {
-        playerMap.updateSeatNumber(socket.id, seatNumber)
-        broadcastStateUpdate()
-    });
-
     socket.on('joinTable', (displayName) => {
         playerMap.addPlayer(socket.id)
         playerMap.updateDisplayName(socket.id, displayName)
         broadcastStateUpdate()
     });
 
-    socket.on('getState', () => {
-        socket.emit('stateUpdate', {gameState: getGameStateFor(socket.id), moveHistory});
+    socket.on('requestSeat', (seatNumber) => {
+        playerMap.updateSeatNumber(socket.id, seatNumber)
+        broadcastStateUpdate()
     });
 
     socket.on('requestMove', (commandRequest) => {

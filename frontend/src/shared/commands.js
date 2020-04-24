@@ -1,5 +1,5 @@
 import {Table} from "./table";
-import {getInitialGameState, GAME_DEFINITIONS} from "./game";
+import {initGame, GAME_DEFINITIONS} from "./game";
 
 class MoveCard {
     constructor(cardId, fromSlug, toSlug, newIndex) {
@@ -27,7 +27,7 @@ class StartGame {
     }
 
     apply() {
-        return getInitialGameState(this.gameId)
+        return initGame(this.gameId)
     }
 
     isValid() {

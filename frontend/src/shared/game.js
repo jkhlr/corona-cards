@@ -2,7 +2,7 @@ const NUMBERS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A
 const SUITS = ['D', 'H', 'S', 'C'];
 
 const CARDS = {
-    'SKAT': (() => {
+    skat: (() => {
         let i = 0;
         return SUITS.flatMap(
             suit => NUMBERS.slice(5).map(
@@ -14,7 +14,7 @@ const CARDS = {
             )
         );
     })(),
-    'POKER': (() => {
+    poker: (() => {
         let i = 0;
         return SUITS.flatMap(
             suit => NUMBERS.map(
@@ -29,7 +29,8 @@ const CARDS = {
 }
 
 const GAME_DEFINITIONS = {
-    'SKAT': {
+    skat: {
+        name: 'Skat',
         numSeats: 3,
         slotDescriptions: [
             {
@@ -51,10 +52,11 @@ const GAME_DEFINITIONS = {
                 initialCards: 0
             }
         ],
-        cardType: 'SKAT',
-        stash: 'closed',
+        cardType: 'skat',
+        stashType: 'closed',
     },
-    'UNO': {
+    uno: {
+        name: 'Uno',
         numSeats: 4,
         slotDescriptions: [
             {
@@ -76,23 +78,37 @@ const GAME_DEFINITIONS = {
                 initialCards: 0
             }
         ],
-        cardType: 'POKER',
-        stash: false
+        cardType: 'poker',
+        stashType: 'none'
     }
 }
 
-function shuffled(arr) {
-    const newArr = arr.slice()
-    for (let i = newArr.length - 1; i > 0; i--) {
+function shuffled(array) {
+    const newArray = [...array]
+    for (let i = newArray.length - 1; i > 0; i--) {
         const rand = Math.floor(Math.random() * (i + 1));
-        [newArr[i], newArr[rand]] = [newArr[rand], newArr[i]];
+        [newArray[i], newArray[rand]] = [newArray[rand], newArray[i]];
     }
-    return newArr
+    return newArray
 }
 
-function getInitialGameState(gameId) {
-    const {numSeats, slotDescriptions, cardType, stash} = GAME_DEFINITIONS[gameId]
+function getGameConfig({id, name, numSeats, slotDescriptions, stashType}) {
+    const config = {gameId: id, gameName: name}
+    for (let [i, description] of slotDescriptions.entries()) {
+        config[`slot-${i}`] = {...description}
+    }
+    for (let i of Array(numSeats).keys()) {
+        config[`seat-${i}`] = {isOpen: false, maxCards: null, canMove: 'all', canFlip: 'none'}
+        if (stashType === 'open') {
+            config[`stash-${i}`] = {isOpen: true, maxCards: null, canMove: 'all', canFlip: 'none'}
+        } else if (stashType === 'closed') {
+            config[`stash-${i}`] = {isOpen: false, maxCards: null, canMove: 'all', canFlip: 'all'}
+        }
+    }
+    return config
+}
 
+function getCardDistribution({cardType, numSeats, slotDescriptions, stashType}) {
     const cards = {}
     const cardDeck = shuffled(CARDS[cardType]);
     for (let [i, description] of slotDescriptions.entries()) {
@@ -104,25 +120,18 @@ function getInitialGameState(gameId) {
     }
     for (let i of Array(numSeats).keys()) {
         cards[`seat-${i}`] = cardDeck.splice(0, remainingCards / numSeats)
-        if (stash === 'open' || stash === 'closed') {
+        if (stashType === 'open' || stashType === 'closed') {
             cards[`stash-${i}`] = []
         }
     }
-
-    const config = {}
-    for (let [i, description] of slotDescriptions.entries()) {
-        config[`slot-${i}`] = {...description}
-    }
-    for (let i of Array(numSeats).keys()) {
-        config[`seat-${i}`] = {isOpen: false, maxCards: null, canMove: 'all', canFlip: 'none'}
-        if (stash === 'open') {
-            config[`stash-${i}`] = {isOpen: true, maxCards: null, canMove: 'all', canFlip: 'none'}
-        } else if (stash === 'closed') {
-            config[`stash-${i}`] = {isOpen: false, maxCards: null, canMove: 'all', canFlip: 'all'}
-        }
-    }
-
-    return {cards, config, gameId};
+    return cards
 }
 
-export {getInitialGameState, GAME_DEFINITIONS}
+function initGame(gameId) {
+    const gameDefinition = GAME_DEFINITIONS[gameId]
+    const config = getGameConfig({id: gameId, ...gameDefinition})
+    const cards = getCardDistribution(gameDefinition)
+    return {cards, config};
+}
+
+export {initGame, GAME_DEFINITIONS}

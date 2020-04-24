@@ -1,7 +1,7 @@
 class Table {
     constructor(gameState) {
         this.cardContainers = Object.fromEntries(
-            Object.keys(gameState.config).map(
+            Object.keys(gameState.cards).map(
                 (key) =>
                     [key, new CardContainer(gameState.cards[key], gameState.config[key])]
             )

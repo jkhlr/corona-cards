@@ -1,6 +1,7 @@
 <template>
     <div class="table" :style="`--card-width: ${cardSize.width}px; --card-height: ${cardSize.height}px`">
-        <resize-observer ref="resizeObserver" @notify="calculateCardSize($event)"/>
+        <div class="title">Corona Cards</div>
+        <div class="game-restart" @click="restartGame"><span>restart</span></div>
         <card-seat
                 v-for="config in seatConfig"
                 v-bind="config"
@@ -14,17 +15,16 @@
                     :key="config.slug"
             />
         </div>
-        <div class="game-restart" @click="restartGame"><span>restart</span></div>
-        <div class="title">Corona Cards</div>
+        <resize-observer ref="resizeObserver" @notify="calculateCardSize($event)"/>
     </div>
 </template>
 
 <script>
-    import CardSlot from "@/components/CardSlot";
-    import CardSeat from "@/components/CardSeat";
     import {mapGetters, mapMutations, mapState} from "vuex";
     import socket from "@/socket";
     import {randomName} from "@/names";
+    import CardSlot from "@/components/CardSlot";
+    import CardSeat from "@/components/CardSeat";
 
     export default {
         name: "Table",
@@ -34,8 +34,8 @@
                     throw new TypeError(`Invalid number of seats: ${this.numSeats}`)
                 }
 
-                let seatSlugs = Object.keys(this.gameState.cards).filter(key => key.startsWith('seat-'));
-                if (this.currentPlayer.seatNumber !== null) {
+                let seatSlugs = Object.keys(this.gameConfig).filter(key => key.startsWith('seat-'));
+                if (this.currentSeatNumber !== null) {
                     const currentSeatSlug = `seat-${this.currentSeatNumber}`;
                     const currentSeatSlugIndex = seatSlugs.indexOf(currentSeatSlug);
                     seatSlugs = seatSlugs.slice(currentSeatSlugIndex).concat(seatSlugs.slice(0, currentSeatSlugIndex));
@@ -73,19 +73,20 @@
                 }
             },
             slotConfig() {
-                const slotSlugs = Object.keys(this.gameState.cards).filter(key => key.startsWith('slot-'));
+                const slotSlugs = Object.keys(this.gameConfig).filter(key => key.startsWith('slot-'));
                 return slotSlugs.map(slug => ({slug}))
             },
             currentSeatNumber() {
-                return this.currentPlayer.seatNumber
+                return this.$store.getters.currentPlayer.seatNumber
+            },
+            numSeats() {
+                return this.$store.getters.numSeats
+            },
+            gameConfig() {
+                return this.$store.state.gameState.config
             },
             ...mapState([
-                'gameState',
                 'cardSize'
-            ]),
-            ...mapGetters([
-                'numSeats',
-                'currentPlayer'
             ])
         },
         sockets: {
@@ -112,28 +113,15 @@
             }
         },
         methods: {
-            getState() {
-                console.log('State update requested');
-                this.$socket.emit('getState');
-            },
             joinTable(displayName) {
                 console.log(`Joining table as ${displayName}.`);
                 this.$socket.emit('joinTable', displayName);
             },
-            switchSeat() {
-                let requestedSeatNumber;
-                if (this.currentSeatNumber === null) {
-                    requestedSeatNumber = 0;
-                } else {
-                    requestedSeatNumber = (this.currentSeatNumber + 1) % this.numSeats;
-                }
-                console.log(`Seat ${requestedSeatNumber} requested.`);
-                this.$socket.emit('requestSeat', requestedSeatNumber);
-            },
             restartGame() {
-                socket.emit('requestMove', {
+                console.log('Restarting game.')
+                this.$socket.emit('requestMove', {
                     command: 'start',
-                    args: {gameId: this.gameState.gameId}
+                    args: {gameId: this.gameConfig.gameId}
                 })
             },
             ...mapMutations([
