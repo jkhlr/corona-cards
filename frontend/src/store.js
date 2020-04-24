@@ -117,6 +117,14 @@ export default new Vuex.Store({
                 ...state.isStashShown,
                 [seatSlug]: state.isStashShown[seatSlug] ? undefined : true
             }
+        },
+        calculateCardSize(state, {width, height}) {
+            if(height < width) {
+                state.cardSize.height = height / 4.5;
+            } else {
+                state.cardSize.height = width / 4.5;
+            }
+            state.cardSize.width = Math.floor(state.cardSize.height * 0.65);
         }
     }
 });

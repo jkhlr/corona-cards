@@ -1,5 +1,6 @@
 <template>
     <div class="table" :style="`--card-width: ${cardSize.width}px; --card-height: ${cardSize.height}px`">
+        <resize-observer ref="resizeObserver" @notify="calculateCardSize($event)"/>
         <card-seat
                 v-for="config in seatConfig"
                 v-bind="config"
@@ -88,6 +89,9 @@
             ])
         },
         sockets: {
+            connect() {
+                this.joinTable(randomName())
+            },
             stateUpdate({gameState, moveHistory}) {
                 console.log(`State updated.`);
                 this.updateState({gameState, moveHistory})
@@ -133,11 +137,12 @@
                 })
             },
             ...mapMutations([
-                'updateState'
+                'updateState',
+                'calculateCardSize'
             ])
         },
-        created() {
-            this.joinTable(randomName())
+        mounted() {
+            this.$refs.resizeObserver.compareAndNotify()
         },
         components: {
             CardSlot,
@@ -156,6 +161,7 @@
     }
 
     .table {
+        position: relative;
         height: 100%;
         background: darkseagreen;
         padding: 8px;
