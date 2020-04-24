@@ -11,10 +11,14 @@ export default new Vuex.Store({
         gameState: {
             cards: {},
             config: {},
-            gameId: null
+            gameId: null,
+            players: [],
+            currentPlayer: {
+                displayName: '',
+                seatNumber: null
+            }
         },
         moveHistory: [],
-        currentSeatNumber: null,
         cardSize: {
             width: 50,
             height: 90
@@ -63,6 +67,21 @@ export default new Vuex.Store({
         numSeats(state) {
             return Object.keys(state.gameState.cards).filter(key => key.startsWith('seat-')).length
         },
+        currentPlayer(state) {
+            return state.gameState.currentPlayer;
+        },
+        getPlayersOnSeat(state, getter) {
+            return (seatNumber) => {
+                let players = state.gameState.players.filter(
+                        ({seatNumber: candidateSeatNumber}) =>
+                            candidateSeatNumber === seatNumber
+                    )
+                if (getter.currentPlayer.seatNumber === seatNumber) {
+                    players = [getter.currentPlayer].concat(players)
+                }
+                return players
+            }
+        },
         hasStash(state) {
             return seatSlug => state.gameState.config.hasOwnProperty(seatSlug)
         },
@@ -93,17 +112,7 @@ export default new Vuex.Store({
                 args: {cardId, containerSlug}
             })
         },
-        startGame(state, {gameId}) {
-            socket.emit('requestMove', {
-                command: 'start',
-                args: {gameId}
-            })
-        },
-        takeSeat(state, seatNumber) {
-            state.currentSeatNumber = seatNumber;
-            socket.emit('takeSeat', seatNumber);
-        },
-        toggleStash(state, seatSlug) {
+        toggleStash(state, {seatSlug}) {
             state.isStashShown = {
                 ...state.isStashShown,
                 [seatSlug]: state.isStashShown[seatSlug] ? undefined : true

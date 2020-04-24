@@ -12,7 +12,7 @@ class MoveCard {
     apply(gameState) {
         const table = new Table(gameState);
         table.moveCard(this.cardId, this.fromSlug, this.toSlug, this.newIndex);
-        return {config: gameState.config, cards: table.getCards()}
+        return {...gameState, cards: table.getCards()}
     }
 
     isValid(gameState) {
@@ -44,7 +44,7 @@ class FlipCard {
     apply(gameState) {
         const table = new Table(gameState);
         table.flipCard(this.cardId, this.containerSlug);
-        return {config: gameState.config, cards: table.getCards()}
+        return {...gameState, cards: table.getCards()}
     }
 
     isValid(gameState) {

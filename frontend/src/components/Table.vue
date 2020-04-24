@@ -13,8 +13,8 @@
                     :key="config.slug"
             />
         </div>
-        <div class="seat-switch" @click="switchSeat"><span>s</span></div>
-        <div class="game-restart" @click="restartGame"><span>r</span></div>
+        <div class="game-restart" @click="restartGame"><span>restart</span></div>
+        <div class="title">Corona Cards</div>
     </div>
 </template>
 
@@ -22,15 +22,11 @@
     import CardSlot from "@/components/CardSlot";
     import CardSeat from "@/components/CardSeat";
     import {mapGetters, mapMutations, mapState} from "vuex";
+    import socket from "@/socket";
+    import {randomName} from "@/names";
 
     export default {
         name: "Table",
-        data() {
-            return {
-                playerName: '',
-                requestingMove: false
-            }
-        },
         computed: {
             seatConfig() {
                 if (this.numSeats > 4) {
@@ -38,7 +34,7 @@
                 }
 
                 let seatSlugs = Object.keys(this.gameState.cards).filter(key => key.startsWith('seat-'));
-                if (this.currentSeatNumber !== null) {
+                if (this.currentPlayer.seatNumber !== null) {
                     const currentSeatSlug = `seat-${this.currentSeatNumber}`;
                     const currentSeatSlugIndex = seatSlugs.indexOf(currentSeatSlug);
                     seatSlugs = seatSlugs.slice(currentSeatSlugIndex).concat(seatSlugs.slice(0, currentSeatSlugIndex));
@@ -79,77 +75,70 @@
                 const slotSlugs = Object.keys(this.gameState.cards).filter(key => key.startsWith('slot-'));
                 return slotSlugs.map(slug => ({slug}))
             },
+            currentSeatNumber() {
+                return this.currentPlayer.seatNumber
+            },
             ...mapState([
                 'gameState',
-                'currentSeatNumber',
                 'cardSize'
             ]),
             ...mapGetters([
-                'numSeats'
+                'numSeats',
+                'currentPlayer'
             ])
         },
         sockets: {
             stateUpdate({gameState, moveHistory}) {
-                if (!this.requestingMove) {
-                    this.updateState({gameState, moveHistory})
-                }
+                console.log(`State updated.`);
+                this.updateState({gameState, moveHistory})
             },
             confirmMove({move, gameState, moveHistory}) {
                 console.log(`Move confirmed:`);
                 console.log(move);
-                this.requestingMove = false;
                 this.updateState({gameState, moveHistory})
             },
             rejectMove({error, gameState, moveHistory}) {
                 console.log(`Move Request rejected: ${error}`);
-                this.requestingMove = false;
                 this.updateState({gameState, moveHistory})
             },
             remoteMove({move, gameState, moveHistory}) {
                 console.log('Remote move:');
                 console.log(move);
-                if (!this.requestingMove) {
-                    this.updateState({gameState, moveHistory})
-                }
+                this.updateState({gameState, moveHistory})
             }
-        }
-        ,
+        },
         methods: {
             getState() {
                 console.log('State update requested');
                 this.$socket.emit('getState');
             },
-            setName(name) {
-                console.log(`Name ${name} set`);
-                this.$socket.emit('setName', name);
+            joinTable(displayName) {
+                console.log(`Joining table as ${displayName}.`);
+                this.$socket.emit('joinTable', displayName);
             },
             switchSeat() {
+                let requestedSeatNumber;
                 if (this.currentSeatNumber === null) {
-                    this.takeSeat(0)
+                    requestedSeatNumber = 0;
                 } else {
-                    this.takeSeat((this.currentSeatNumber + 1) % this.numSeats);
+                    requestedSeatNumber = (this.currentSeatNumber + 1) % this.numSeats;
                 }
+                console.log(`Seat ${requestedSeatNumber} requested.`);
+                this.$socket.emit('requestSeat', requestedSeatNumber);
             },
             restartGame() {
-                this.startGame({gameId: this.gameState.gameId})
+                socket.emit('requestMove', {
+                    command: 'start',
+                    args: {gameId: this.gameState.gameId}
+                })
             },
             ...mapMutations([
-                'updateState',
-                'takeSeat',
-                'startGame'
+                'updateState'
             ])
-        }
-        ,
-        watch: {
-            playerName() {
-                this.setName(this.playerName)
-            }
-        }
-        ,
+        },
         created() {
-            this.$socket.emit('getState');
-        }
-        ,
+            this.joinTable(randomName())
+        },
         components: {
             CardSlot,
             CardSeat
@@ -224,25 +213,20 @@
         height: 100%;
     }
 
-    .seat-switch {
-        cursor: pointer;
-        position: absolute;
-        height: 2em;
-        width: 2em;
-        top: calc(50% - 2em);
-        left: calc(50% - 1em);
-        text-align: center;
-        font-weight: bold;
-    }
-
     .game-restart {
         cursor: pointer;
         position: absolute;
         height: 2em;
-        width: 2em;
-        top: calc(50%);
-        left: calc(50% - 1em);
+        width: 10em;
+        top: calc(var(--card-container-height) / 2 + 1.5em);
+        left: calc(50% - 5em);
         text-align: center;
+    }
+
+    .title {
         font-weight: bold;
+        font-size: xx-large;
+        grid-area: top;
+        margin-top: -1em;
     }
 </style>

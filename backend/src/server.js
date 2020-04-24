@@ -38,50 +38,96 @@ function parseCommandRequest(commandRequest) {
     throw new ValidationError(`Invalid command request: ${commandRequest.command}`);
 }
 
-function getGameStateFor(socket) {
-    const seatNumber = seatMap.get(socket.id).seatNumber;
+function getGameStateFor(socketId) {
+    const currentPlayer = playerMap.getCurrentPlayer(socketId)
     const cards = Object.fromEntries(
         Object.entries(gameState.cards).map(
             ([key, cards]) => {
-                if (key === `seat-${seatNumber}`) {
+                if (key === `seat-${currentPlayer.seatNumber}`) {
                     return [key, cards]
                 }
                 if (gameState.config[key].isOpen) {
                     return [key, cards.map(card => ({...card, face: card.flipped ? '*' : card.face}))]
                 }
-                return [key, cards.map(card => ({...card, face: card.flipped ? card.face: '*'}))]
+                return [key, cards.map(card => ({...card, face: card.flipped ? card.face : '*'}))]
             }
         )
     );
-    return {...gameState, cards}
+    const players = playerMap.getOtherPlayers(socketId)
+    return {...gameState, cards, currentPlayer, players}
+}
+
+class PlayerMap {
+    constructor() {
+        this.socketMap = new Map();
+    }
+
+    addPlayer(socketId) {
+        this.socketMap.set(socketId, {seatNumber: null, displayName: null})
+    }
+
+    removePlayer(socketId) {
+        this.socketMap.delete(socketId)
+    }
+
+    updateSeatNumber(socketId, seatNumber) {
+        const currentPlayerInfo = this.socketMap.get(socketId);
+        this.socketMap.set(socketId, {...currentPlayerInfo, seatNumber})
+    }
+
+    updateDisplayName(socketId, displayName) {
+        const currentPlayerInfo = this.socketMap.get(socketId);
+        this.socketMap.set(socketId, {...currentPlayerInfo, displayName})
+    }
+
+    getCurrentPlayer(socketId) {
+        return this.socketMap.get(socketId);
+    }
+
+    getOtherPlayers(socketId) {
+        return [...this.socketMap.entries()].filter(
+            ([otherSocketId, _]) => otherSocketId !== socketId
+        ).map(
+            ([_, player]) => player
+        )
+    }
+}
+
+function broadcastStateUpdate() {
+    Object.values(io.sockets.connected).filter(
+        socket => playerMap.getCurrentPlayer(socket.id)
+    ).forEach(
+        socket => socket.emit('stateUpdate', {gameState: getGameStateFor(socket.id), moveHistory})
+    )
 }
 
 const startGame = new StartGame('SKAT')
 let gameState = startGame.apply()
 let moveHistory = [];
-const seatMap = new Map();
+const playerMap = new PlayerMap()
 
 io.on('connection', (socket) => {
     console.log(`Socket ${socket.id} connected`);
-    seatMap.set(socket.id, {seatNumber: null, name: null});
 
     socket.on('disconnect', () => {
         console.log(`Socket ${socket.id} disconnected`);
-        seatMap.delete(socket.id)
+        playerMap.removePlayer(socket.id)
+        broadcastStateUpdate()
+    });
+
+    socket.on('requestSeat', (seatNumber) => {
+        playerMap.updateSeatNumber(socket.id, seatNumber)
+        broadcastStateUpdate()
+    });
+
+    socket.on('joinTable', (displayName) => {
+        playerMap.addPlayer(socket.id)
+        playerMap.updateDisplayName(socket.id, displayName)
+        broadcastStateUpdate()
     });
 
     socket.on('getState', () => {
-        socket.emit('stateUpdate', {gameState: getGameStateFor(socket), moveHistory});
-    });
-
-    socket.on('takeSeat', (seatNumber) => {
-        seatMap.set(socket.id, {...seatMap.get(socket.id), seatNumber});
-        socket.emit('stateUpdate', {gameState: getGameStateFor(socket), moveHistory});
-    });
-
-    socket.on('setName', (name) => {
-        seatMap.set(socket.id, {...seatMap.get(socket.id), name});
-        socket.emit('stateUpdate', {gameState: getGameStateFor(socket), moveHistory});
+        socket.emit('stateUpdate', {gameState: getGameStateFor(socket.id), moveHistory});
     });
 
     socket.on('requestMove', (commandRequest) => {
@@ -94,7 +140,7 @@ io.on('connection', (socket) => {
             moveHistory = [...moveHistory, commandRequest];
             socket.emit('confirmMove', {
                 move: commandRequest,
-                gameState: getGameStateFor(socket),
+                gameState: getGameStateFor(socket.id),
                 moveHistory
             });
             const otherSockets = Object.values(io.sockets.connected).filter(
@@ -105,7 +151,7 @@ io.on('connection', (socket) => {
                 otherSocket =>
                     otherSocket.emit('remoteMove', {
                         move: commandRequest,
-                        gameState: getGameStateFor(otherSocket),
+                        gameState: getGameStateFor(otherSocket.id),
                         moveHistory
                     })
             );
@@ -114,7 +160,7 @@ io.on('connection', (socket) => {
                 socket.emit('rejectMove', {
                     move: commandRequest,
                     error: err.message,
-                    gameState: getGameStateFor(socket),
+                    gameState: getGameStateFor(socket.id),
                     moveHistory
                 });
             } else {

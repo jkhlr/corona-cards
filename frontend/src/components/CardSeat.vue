@@ -6,7 +6,7 @@
                 [orientation]: true
             }"
     >
-        <span class="border-text player-name">NAME</span>
+        <span class="border-text player-name" :class="{bold: isCurrentSeat}" @click="takeSeat">{{ playerName }}</span>
         <card-container v-if="isStashShown" :slug="stashSlug"   :display="`fan ${orientation}`"/>
         <card-container v-else              :slug="slug"        :display="`fan ${orientation}`"/>
         <span class="border-text stash-toggle" v-if="hasStash" @click="toggleStash">
@@ -34,26 +34,46 @@
             }
         },
         computed: {
+            seatNumber() {
+                const [_, seatNumber] = this.slug.split('-')
+                return Number.parseInt(seatNumber)
+            },
+            seatSlug() {
+                return `seat-${this.seatNumber}`
+            },
+            isCurrentSeat() {
+                return this.seatNumber === this.$store.getters.currentPlayer.seatNumber
+            },
+            playerName() {
+                const players = this.$store.getters.getPlayersOnSeat(this.seatNumber)
+                if (players.length) {
+                    return players.map(player => player.displayName).join(' + ')
+                }
+                return 'empty'
+            },
             isHighlighted() {
-                return this.$store.getters.lastMoveFromSlug === this.slug
+                return this.$store.getters.lastMoveFromSlug === this.seatSlug
             },
             hasStash() {
-                return this.$store.getters.hasStash(this.slug)
-            },
-            isStashShown() {
-                return this.$store.getters.isStashShown(this.slug) === true
+                return this.$store.getters.hasStash(this.seatSlug)
             },
             stashSlug() {
-                const [_, seatNumber] = this.slug.split('-')
-                return `stash-${seatNumber}`
+                return `stash-${this.seatNumber}`
             },
             isStashHighlighted() {
                 return this.$store.getters.lastMoveFromSlug === this.stashSlug
             },
+            isStashShown() {
+                return this.$store.getters.isStashShown(this.seatSlug) === true
+            }
         },
         methods: {
             toggleStash() {
-                this.$store.commit('toggleStash', this.slug)
+                this.$store.commit('toggleStash', {seatSlug: this.slug})
+            },
+            takeSeat() {
+                if (!this.isCurrentSeat)
+                this.$socket.emit('requestSeat', this.seatNumber)
             }
         },
         components: {
@@ -83,6 +103,10 @@
         background: darkseagreen;
     }
 
+    .card-seat .border-text.bold {
+        font-weight: bold;
+    }
+
     .card-seat .stash-toggle {
         padding: 0 3px;
         bottom: -5px;
@@ -97,5 +121,11 @@
         padding: 0 3px;
         top: -5px;
         left: 10px;
+    }
+
+    .card-seat .seat-switch {
+        padding: 0 3px;
+        top: -5px;
+        right: 10px;
     }
 </style>

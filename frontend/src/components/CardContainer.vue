@@ -103,7 +103,7 @@
                 return this.$store.getters.canMove({cardId, fromSlug, toSlug, newIndex});
             },
             clickCard(cardId) {
-                const currentSeatNumber = this.$store.state.currentSeatNumber
+                const currentSeatNumber = this.$store.state.gameState.currentPlayer.seatNumber
                 const currentSeatSlug = `seat-${currentSeatNumber}`;
                 const currentStashSlug = `stash-${currentSeatNumber}`;
                 const isCurrentStashShown = this.$store.getters.isStashShown(currentSeatSlug)
