@@ -1,7 +1,8 @@
 <template>
     <div class="table" :style="`--card-width: ${cardSize.width}px; --card-height: ${cardSize.height}px`">
         <div class="title">Corona Cards</div>
-        <div class="game-restart" @click="restartGame"><span>restart</span></div>
+        <div v-if="gameConfig.gameId" class="game-start" @click="restartGame"><span>restart</span></div>
+        <div v-else                   class="game-start" @click="startGame('skat')"><span>start</span></div>
         <card-seat
                 v-for="config in seatConfig"
                 v-bind="config"
@@ -20,8 +21,7 @@
 </template>
 
 <script>
-    import {mapGetters, mapMutations, mapState} from "vuex";
-    import socket from "@/socket";
+    import {mapMutations, mapState} from "vuex";
     import {randomName} from "@/names";
     import CardSlot from "@/components/CardSlot";
     import CardSeat from "@/components/CardSeat";
@@ -83,7 +83,7 @@
                 return this.$store.getters.numSeats
             },
             gameConfig() {
-                return this.$store.state.gameState.config
+                return this.$store.state.gameState.config || {}
             },
             ...mapState([
                 'cardSize'
@@ -91,37 +91,35 @@
         },
         sockets: {
             connect() {
-                this.joinTable(randomName())
+                this.joinMatch({matchId: 'default', displayName: randomName()})
             },
-            stateUpdate({gameState, moveHistory}) {
+            updateState({gameState, moveHistory}) {
                 console.log(`State updated.`);
-                this.updateState({gameState, moveHistory})
-            },
-            confirmMove({move, gameState, moveHistory}) {
-                console.log(`Move confirmed:`);
-                console.log(move);
                 this.updateState({gameState, moveHistory})
             },
             rejectMove({error, gameState, moveHistory}) {
                 console.log(`Move Request rejected: ${error}`);
                 this.updateState({gameState, moveHistory})
-            },
-            remoteMove({move, gameState, moveHistory}) {
-                console.log('Remote move:');
-                console.log(move);
-                this.updateState({gameState, moveHistory})
             }
         },
         methods: {
-            joinTable(displayName) {
-                console.log(`Joining table as ${displayName}.`);
-                this.$socket.emit('joinTable', displayName);
+            joinMatch({matchId, displayName}) {
+                console.log(`Joining match ${matchId} as ${displayName}.`);
+                this.$socket.emit('joinMatch', {matchId, displayName});
             },
             restartGame() {
                 console.log('Restarting game.')
                 this.$socket.emit('requestMove', {
                     command: 'start',
                     args: {gameId: this.gameConfig.gameId}
+                })
+            },
+
+            startGame(gameId) {
+                console.log(`Starting game: ${gameId}`)
+                this.$socket.emit('requestMove', {
+                    command: 'start',
+                    args: {gameId}
                 })
             },
             ...mapMutations([
@@ -207,7 +205,7 @@
         height: 100%;
     }
 
-    .game-restart {
+    .game-start {
         cursor: pointer;
         position: absolute;
         height: 2em;

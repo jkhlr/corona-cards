@@ -19,6 +19,18 @@ class MoveCard {
         const table = new Table(gameState);
         return table.canMoveCard(this.cardId, this.fromSlug, this.toSlug, this.newIndex);
     }
+
+    serialize() {
+        return {
+            command: 'move',
+            args: {
+                cardId: this.cardId,
+                fromSlug: this.fromSlug,
+                toSlug: this.toSlug,
+                newIndex: this.newIndex
+            }
+        }
+    }
 }
 
 class StartGame {
@@ -32,6 +44,15 @@ class StartGame {
 
     isValid() {
         return this.gameId in GAME_DEFINITIONS
+    }
+
+    serialize() {
+        return {
+            command: 'start',
+            args: {
+                cardId: this.gameId,
+            }
+        }
     }
 }
 
@@ -50,6 +71,16 @@ class FlipCard {
     isValid(gameState) {
         const table = new Table(gameState);
         return table.canFlipCard(this.cardId, this.containerSlug);
+    }
+
+    serialize() {
+        return {
+            command: 'flip',
+            args: {
+                cardId: this.cardId,
+                containerSlug: this.containerSlug
+            }
+        }
     }
 }
 

@@ -97,20 +97,12 @@ export default new Vuex.Store({
         moveCard(state, {cardId, fromSlug, toSlug, newIndex}) {
             const command = new MoveCard(cardId, fromSlug, toSlug, newIndex);
             state.gameState = command.apply(state.gameState);
-
-            socket.emit('requestMove', {
-                command: 'move',
-                args: {cardId, fromSlug, toSlug, newIndex}
-            })
+            socket.emit('requestMove', command.serialize())
         },
         flipCard(state, {cardId, containerSlug}) {
             const command = new FlipCard(cardId, containerSlug);
             state.gameState = command.apply(state.gameState);
-
-            socket.emit('requestMove', {
-                command: 'flip',
-                args: {cardId, containerSlug}
-            })
+            socket.emit('requestMove', command.serialize())
         },
         toggleStash(state, {seatSlug}) {
             state.isStashShown = {
@@ -119,11 +111,7 @@ export default new Vuex.Store({
             }
         },
         calculateCardSize(state, {width, height}) {
-            if(height < width) {
-                state.cardSize.height = height / 4.5;
-            } else {
-                state.cardSize.height = width / 4.5;
-            }
+            state.cardSize.height = 90;
             state.cardSize.width = Math.floor(state.cardSize.height * 0.65);
         }
     }
