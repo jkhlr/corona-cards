@@ -1,3 +1,5 @@
+export {initGame, GAME_DEFINITIONS}
+
 const NUMBERS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 const SUITS = ['D', 'H', 'S', 'C'];
 
@@ -133,5 +135,3 @@ function initGame(gameId) {
     const cards = getCardDistribution(gameDefinition)
     return {cards, config};
 }
-
-export {initGame, GAME_DEFINITIONS}

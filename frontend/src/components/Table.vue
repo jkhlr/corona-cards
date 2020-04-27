@@ -2,7 +2,7 @@
     <div class="table" :style="`--card-width: ${cardSize.width}px; --card-height: ${cardSize.height}px`">
         <div class="title">Corona Cards</div>
         <div v-if="gameConfig.gameId" class="game-start" @click="restartGame"><span>restart</span></div>
-        <div v-else                   class="game-start" @click="startGame('skat')"><span>start</span></div>
+        <div v-else class="game-start" @click="startGame('skat')"><span>start</span></div>
         <card-seat
                 v-for="config in seatConfig"
                 v-bind="config"
@@ -21,7 +21,7 @@
 </template>
 
 <script>
-    import {mapMutations, mapState} from "vuex";
+    import {mapActions, mapMutations, mapState} from "vuex";
     import {randomName} from "@/names";
     import CardSlot from "@/components/CardSlot";
     import CardSeat from "@/components/CardSeat";
@@ -89,46 +89,26 @@
                 'cardSize'
             ])
         },
-        sockets: {
-            connect() {
-                this.joinMatch({matchId: 'default', displayName: randomName()})
-            },
-            updateState({gameState, moveHistory}) {
-                console.log(`State updated.`);
-                this.updateState({gameState, moveHistory})
-            },
-            rejectMove({error, gameState, moveHistory}) {
-                console.log(`Move Request rejected: ${error}`);
-                this.updateState({gameState, moveHistory})
-            }
-        },
         methods: {
             joinMatch({matchId, displayName}) {
                 console.log(`Joining match ${matchId} as ${displayName}.`);
-                this.$socket.emit('joinMatch', {matchId, displayName});
+                this.$store.dispatch('joinMatch', {matchId, displayName});
             },
             restartGame() {
                 console.log('Restarting game.')
-                this.$socket.emit('requestMove', {
-                    command: 'start',
-                    args: {gameId: this.gameConfig.gameId}
-                })
+                this.$store.dispatch('startGame', {gameId: this.gameConfig.gameId})
             },
-
             startGame(gameId) {
                 console.log(`Starting game: ${gameId}`)
-                this.$socket.emit('requestMove', {
-                    command: 'start',
-                    args: {gameId}
-                })
+                this.$store.dispatch('startGame', {gameId})
             },
             ...mapMutations([
-                'updateState',
                 'calculateCardSize'
             ])
         },
         mounted() {
             this.$refs.resizeObserver.compareAndNotify()
+            this.joinMatch({matchId: 'default', displayName: randomName()})
         },
         components: {
             CardSlot,

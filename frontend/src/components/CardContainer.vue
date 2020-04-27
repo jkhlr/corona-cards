@@ -28,6 +28,7 @@
 <script>
     import vueDraggable from 'vuedraggable';
     import Card from "@/components/Card";
+    import {mapActions, mapGetters, mapState} from "vuex";
 
     export default {
         name: "CardContainer",
@@ -52,19 +53,16 @@
         },
         computed: {
             cards() {
-                return this.$store.state.gameState.cards[this.slug]
+                return this.gameState.cards[this.slug]
             },
             config() {
-                return this.$store.state.gameState.config[this.slug]
-            },
-            cardWidth() {
-                return this.$store.state.cardSize.width;
+                return this.gameState.config[this.slug]
             },
             overlapWidth() {
-                return this.calculateOverlap(this.size.width, this.cardWidth, this.numCardElements)
+                return this.calculateOverlap(this.size.width, this.cardSize.width, this.numCardElements)
             },
             overlapHeight() {
-                return this.calculateOverlap(this.size.height, this.cardWidth, this.numCardElements)
+                return this.calculateOverlap(this.size.height, this.cardSize.width, this.numCardElements)
             },
             componentData() {
                 return {
@@ -73,7 +71,17 @@
                         style: `--overlap-width: ${this.overlapWidth}; --overlap-height: ${this.overlapHeight}`
                     }
                 }
-            }
+            },
+            ...mapGetters([
+                'canMove',
+                'canFlip',
+                'isStashShown',
+                'firstOpenSlotSlug'
+            ]),
+            ...mapState([
+                'gameState',
+                'cardSize'
+            ])
         },
         methods: {
             movable(index) {
@@ -90,7 +98,7 @@
                 const toSlug = to.attributes['slug'].value;
                 const cardId = parseInt(item.attributes['card-id'].value)
                 if (fromSlug !== toSlug || oldIndex !== newIndex) {
-                    this.$store.commit('moveCard', {cardId, fromSlug, toSlug, newIndex});
+                    this.moveCard({cardId, fromSlug, toSlug, newIndex});
                 }
             },
             checkDrag({from, to, dragged, draggedContext: {index: oldIndex, futureIndex: newIndex}}) {
@@ -100,17 +108,17 @@
                 if (fromSlug === toSlug && oldIndex === newIndex) {
                     return true
                 }
-                return this.$store.getters.canMove({cardId, fromSlug, toSlug, newIndex});
+                return this.canMove({cardId, fromSlug, toSlug, newIndex});
             },
             clickCard(cardId) {
-                const currentSeatNumber = this.$store.state.gameState.currentPlayer.seatNumber
+                const currentSeatNumber = this.gameState.currentPlayer.seatNumber
                 const currentSeatSlug = `seat-${currentSeatNumber}`;
                 const currentStashSlug = `stash-${currentSeatNumber}`;
-                const isCurrentStashShown = this.$store.getters.isStashShown(currentSeatSlug)
+                const isCurrentStashShown = this.isStashShown(currentSeatSlug)
                 const fromSlug = this.slug;
                 const newIndex = null;
                 if (this.slug === currentSeatSlug) {
-                    const firstOpenSlotSlug = this.$store.getters.firstOpenSlotSlug
+                    const firstOpenSlotSlug = this.firstOpenSlotSlug
                     this.tryMoveCard({toSlug: firstOpenSlotSlug, cardId, fromSlug, newIndex})
                 } else if (this.slug.startsWith('slot-') && currentSeatNumber !== null) {
                     if (isCurrentStashShown) {
@@ -123,13 +131,13 @@
                 }
             },
             tryMoveCard({cardId, fromSlug, toSlug, newIndex}) {
-                if (this.$store.getters.canMove({cardId, fromSlug, toSlug, newIndex})) {
-                    this.$store.commit('moveCard', {cardId, fromSlug, toSlug, newIndex});
+                if (this.canMove({cardId, fromSlug, toSlug, newIndex})) {
+                    this.moveCard({cardId, fromSlug, toSlug, newIndex});
                 }
             },
             tryFlipCard({cardId, containerSlug}) {
-                if (this.$store.getters.canFlip({cardId, containerSlug})) {
-                    this.$store.commit('flipCard', {cardId, containerSlug});
+                if (this.canFlip({cardId, containerSlug})) {
+                    this.flipCard({cardId, containerSlug});
                 }
             },
             calculateOverlap(containerSize, elementSize, numElements) {
@@ -140,7 +148,11 @@
                     return 0.5
                 }
                 return overlap
-            }
+            },
+            ...mapActions([
+                'moveCard',
+                'flipCard'
+            ])
         },
         mounted() {
             this.$refs.resizeObserver.compareAndNotify()

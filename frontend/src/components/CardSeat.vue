@@ -72,8 +72,9 @@
                 this.$store.commit('toggleStash', {seatSlug: this.slug})
             },
             takeSeat() {
-                if (!this.isCurrentSeat)
-                this.$socket.emit('requestSeat', this.seatNumber)
+                if (!this.isCurrentSeat) {
+                    this.$store.dispatch('takeSeat', {seatNumber: this.seatNumber})
+                }
             }
         },
         components: {

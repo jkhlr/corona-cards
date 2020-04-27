@@ -1,5 +1,7 @@
 import {FlipCard, MoveCard, StartGame} from "./commands";
 
+export {Match, ValidationError}
+
 class Match {
     constructor(id) {
         this.id = id;
@@ -24,7 +26,7 @@ class Match {
             )
         );
         const players = this.playerMap.getOtherPlayers(clientId)
-        return {...this.gameState, cards, currentPlayer, players}
+        return {...this.gameState, cards, currentPlayer, players, moveHistory: this.moveHistory}
     }
 
     applyCommandRequest(commandRequest) {
@@ -102,5 +104,3 @@ class PlayerMap {
         )
     }
 }
-
-export {Match, ValidationError}

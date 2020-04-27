@@ -16,9 +16,9 @@ export default new Vuex.Store({
             currentPlayer: {
                 displayName: '',
                 seatNumber: null
-            }
+            },
+            moveHistory: []
         },
-        moveHistory: [],
         cardSize: {
             width: 50,
             height: 90
@@ -39,7 +39,7 @@ export default new Vuex.Store({
             }
         },
         lastMove(state) {
-            return state.moveHistory.filter(move => move.command === 'move').slice(-1).pop()
+            return state.gameState.moveHistory.filter(move => move.command === 'move').slice(-1).pop()
         },
         lastMoveCardId(state, getters) {
             if (!getters.lastMove) {
@@ -73,9 +73,9 @@ export default new Vuex.Store({
         getPlayersOnSeat(state, getter) {
             return (seatNumber) => {
                 let players = state.gameState.players.filter(
-                        ({seatNumber: candidateSeatNumber}) =>
-                            candidateSeatNumber === seatNumber
-                    )
+                    ({seatNumber: candidateSeatNumber}) =>
+                        candidateSeatNumber === seatNumber
+                )
                 if (getter.currentPlayer.seatNumber === seatNumber) {
                     players = [getter.currentPlayer].concat(players)
                 }
@@ -90,19 +90,11 @@ export default new Vuex.Store({
         }
     },
     mutations: {
-        updateState(state, {gameState, moveHistory}) {
+        syncState(state, {gameState}) {
             state.gameState = gameState;
-            state.moveHistory = moveHistory;
         },
-        moveCard(state, {cardId, fromSlug, toSlug, newIndex}) {
-            const command = new MoveCard(cardId, fromSlug, toSlug, newIndex);
+        applyCommand(state, {command}) {
             state.gameState = command.apply(state.gameState);
-            socket.emit('requestMove', command.serialize())
-        },
-        flipCard(state, {cardId, containerSlug}) {
-            const command = new FlipCard(cardId, containerSlug);
-            state.gameState = command.apply(state.gameState);
-            socket.emit('requestMove', command.serialize())
         },
         toggleStash(state, {seatSlug}) {
             state.isStashShown = {
@@ -113,6 +105,71 @@ export default new Vuex.Store({
         calculateCardSize(state, {width, height}) {
             state.cardSize.height = 90;
             state.cardSize.width = Math.floor(state.cardSize.height * 0.65);
+        }
+    },
+    actions: {
+        joinMatch({commit}, {matchId, displayName}) {
+            socket.emit(
+                'joinMatch',
+                {matchId, displayName},
+                ({gameState}) => commit('syncState', {gameState})
+            )
+        },
+        takeSeat({commit}, {seatNumber}) {
+            socket.emit(
+                'takeSeat',
+                {seatNumber},
+                ({gameState}) => commit('syncState', {gameState})
+            )
+        },
+        startGame({commit}, {gameId}) {
+            socket.emit(
+                'applyCommand',
+                {commandRequest: {command: 'start', args: {gameId}}},
+                ({gameState, error}) => {
+                    if (error) {
+                        console.error(error)
+                    } else {
+                        commit('syncState', {gameState})
+                    }
+                }
+            )
+        },
+        moveCard({commit}, {cardId, fromSlug, toSlug, newIndex}) {
+            const command = new MoveCard(cardId, fromSlug, toSlug, newIndex);
+            commit('applyCommand', {command})
+            socket.emit(
+                'applyCommand',
+                {commandRequest: command.serialize()},
+                ({gameState, error}) => {
+                    if (error) {
+                        console.error(error)
+                    } else {
+                        commit('syncState', {gameState})
+                    }
+                }
+            )
+        },
+        flipCard({commit}, {cardId, containerSlug}) {
+            const command = new FlipCard(cardId, containerSlug);
+            commit('applyCommand', {command})
+            socket.emit(
+                'applyCommand',
+                {commandRequest: command.serialize()},
+                ({gameState, error}) => {
+                    if (error) {
+                        console.error(error)
+                    } else {
+                        commit('syncState', {gameState})
+                    }
+                }
+            )
+        },
+        syncState({commit}) {
+            socket.emit(
+                'syncState',
+                ({gameState}) => commit('syncState', {gameState})
+            )
         }
     }
 });

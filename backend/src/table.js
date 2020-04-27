@@ -1,3 +1,5 @@
+export {Table}
+
 class Table {
     constructor(gameState) {
         this.cardContainers = Object.fromEntries(
@@ -18,6 +20,7 @@ class Table {
         const from = this.cardContainers[fromSlug];
         const to = this.cardContainers[toSlug];
         const movingCard = from.removeCard(cardId);
+        movingCard.flipped = false;
         to.addCardAt(movingCard, index);
     }
 
@@ -113,5 +116,3 @@ class CardContainer {
         return false
     }
 }
-
-export {Table}

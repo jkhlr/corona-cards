@@ -1,3 +1,5 @@
+export {randomName}
+
 const NAMES = [
     "Adeno",
     "Astro",
@@ -90,5 +92,3 @@ const NAMES = [
 function randomName() {
     return NAMES[Math.floor(Math.random() * NAMES.length)];
 }
-
-export {randomName}

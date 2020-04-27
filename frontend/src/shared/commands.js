@@ -1,6 +1,31 @@
 import {Table} from "./table";
 import {initGame, GAME_DEFINITIONS} from "./game";
 
+export {MoveCard, StartGame, FlipCard}
+
+class StartGame {
+    constructor(gameId) {
+        this.gameId = gameId;
+    }
+
+    apply() {
+        return initGame(this.gameId)
+    }
+
+    isValid() {
+        return this.gameId in GAME_DEFINITIONS
+    }
+
+    serialize() {
+        return {
+            command: 'start',
+            args: {
+                cardId: this.gameId,
+            }
+        }
+    }
+}
+
 class MoveCard {
     constructor(cardId, fromSlug, toSlug, newIndex) {
         this.cardId = cardId;
@@ -33,29 +58,6 @@ class MoveCard {
     }
 }
 
-class StartGame {
-    constructor(gameId) {
-        this.gameId = gameId;
-    }
-
-    apply() {
-        return initGame(this.gameId)
-    }
-
-    isValid() {
-        return this.gameId in GAME_DEFINITIONS
-    }
-
-    serialize() {
-        return {
-            command: 'start',
-            args: {
-                cardId: this.gameId,
-            }
-        }
-    }
-}
-
 class FlipCard {
     constructor(cardId, containerSlug) {
         this.cardId = cardId;
@@ -83,7 +85,5 @@ class FlipCard {
         }
     }
 }
-
-export {MoveCard, StartGame, FlipCard}
 
 
