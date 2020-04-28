@@ -121,6 +121,7 @@
     .table {
         --card-width: none;
         --card-height: none;
+        --card-border: 1px;
         --card-container-border: 2px;
         --card-container-padding: 8px;
         --card-container-height: calc(var(--card-height) + 2 * (var(--card-container-border) + var(--card-container-padding)));

@@ -46,15 +46,17 @@
     .card {
         flex-shrink: 0;
         position: relative;
+        border: var(--card-border) solid black;
         border-radius: 5px;
-        background: white;
+        overflow: hidden;
         box-sizing: border-box;
     }
 
     .card img {
         display: block;
-        width: var(--card-width);
-        height: var(--card-height);
+        width: calc(var(--card-width) - 2 * var(--card-border));
+        height: calc(var(--card-height) - 2 * var(--card-border));
+        box-shadow: inset 100px 100px white
     }
 
     .card.highlighted {

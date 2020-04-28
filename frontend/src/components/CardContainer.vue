@@ -226,6 +226,6 @@
 
     .cards.fan.vertical .card >>> img {
         transform: rotate(90deg);
-        transform-origin: calc(var(--card-height) / 2) calc(var(--card-height) / 2);
+        transform-origin: calc(var(--card-height) / 2 - var(--card-border)) calc(var(--card-height) / 2 - var(--card-border));
     }
 </style>
