@@ -19,11 +19,11 @@ export default new Vuex.Store({
             },
             moveHistory: []
         },
-        cardSize: {
-            width: 50,
-            height: 90
-        },
-        isStashShown: {}
+        isStashShown: {},
+        tableSize: {
+            width: 0,
+            height: 0
+        }
     },
     getters: {
         canMove(state) {
@@ -67,6 +67,9 @@ export default new Vuex.Store({
         numSeats(state) {
             return Object.keys(state.gameState.cards).filter(key => key.startsWith('seat-')).length
         },
+        numSlots(state) {
+            return Object.keys(state.gameState.cards).filter(key => key.startsWith('slot-')).length
+        },
         currentPlayer(state) {
             return state.gameState.currentPlayer;
         },
@@ -87,6 +90,34 @@ export default new Vuex.Store({
         },
         isStashShown(state) {
             return seatSlug => state.isStashShown[seatSlug]
+        },
+        cardSize(state, getter) {
+            // TODO: don't replace config with every stateSync to prevent this getter from being executed every time.
+            const cardContainerPadding = 8;
+            const cardContainerBorder = 2;
+            const tablePadding = 8;
+            const cardSlotMargin = 4;
+            const tableWidth = state.tableSize.width;
+            const tableHeight = state.tableSize.height
+
+            function getNumSlots(cardHeight) {
+                const cardWidth = Math.floor(cardHeight * 0.6)
+                const seatHeight = cardHeight + 2 * (cardContainerBorder + cardContainerPadding)
+                const slotHeight = cardHeight + 2 * (cardContainerBorder + cardContainerPadding + cardSlotMargin)
+                const slotWidth = 2 * cardWidth + 2 * (cardContainerBorder + cardContainerPadding + cardSlotMargin)
+                const slotContainerHeight = Math.max(tableHeight - 2 * seatHeight - 4 * tablePadding, 0)
+                const slotContainerWidth = Math.max(tableWidth - 2 * seatHeight - 4 * tablePadding, 0)
+                return Math.floor(slotContainerWidth / slotWidth) * Math.floor(slotContainerHeight / slotHeight)
+            }
+
+            const numSlots = getter.numSlots
+            let tryHeight = state.tableSize.height;
+            while (tryHeight > 0 && getNumSlots(tryHeight) < numSlots) {
+                tryHeight--;
+            }
+            console.log('tryHeight', tryHeight)
+
+            return {height: tryHeight, width: Math.floor(tryHeight * 0.6)};
         }
     },
     mutations: {
@@ -102,9 +133,9 @@ export default new Vuex.Store({
                 [seatSlug]: state.isStashShown[seatSlug] ? undefined : true
             }
         },
-        calculateCardSize(state, {width, height}) {
-            state.cardSize.height = 90;
-            state.cardSize.width = Math.floor(state.cardSize.height * 0.65);
+        setTableSize(state, {width, height}) {
+            state.tableSize.width = width;
+            state.tableSize.height = height;
         }
     },
     actions: {

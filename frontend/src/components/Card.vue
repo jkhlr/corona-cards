@@ -56,7 +56,6 @@
         display: block;
         width: calc(var(--card-width) - 2 * var(--card-border));
         height: calc(var(--card-height) - 2 * var(--card-border));
-        box-shadow: inset 100px 100px white
     }
 
     .card.highlighted {

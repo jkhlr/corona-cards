@@ -79,7 +79,9 @@
                 'firstOpenSlotSlug'
             ]),
             ...mapState([
-                'gameState',
+                'gameState'
+            ]),
+            ...mapGetters([
                 'cardSize'
             ])
         },

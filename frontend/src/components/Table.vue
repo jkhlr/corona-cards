@@ -16,12 +16,12 @@
                     :key="config.slug"
             />
         </div>
-        <resize-observer ref="resizeObserver" @notify="calculateCardSize($event)"/>
+        <resize-observer ref="resizeObserver" @notify="setTableSize($event)"/>
     </div>
 </template>
 
 <script>
-    import {mapActions, mapMutations, mapState} from "vuex";
+    import {mapActions, mapGetters, mapMutations, mapState} from "vuex";
     import {randomName} from "@/names";
     import CardSlot from "@/components/CardSlot";
     import CardSeat from "@/components/CardSeat";
@@ -85,7 +85,7 @@
             gameConfig() {
                 return this.$store.state.gameState.config || {}
             },
-            ...mapState([
+            ...mapGetters([
                 'cardSize'
             ])
         },
@@ -103,7 +103,7 @@
                 this.$store.dispatch('startGame', {gameId})
             },
             ...mapMutations([
-                'calculateCardSize'
+                'setTableSize'
             ])
         },
         mounted() {
@@ -118,6 +118,8 @@
 </script>
 
 <style scoped>
+
+
     .table {
         --card-width: none;
         --card-height: none;
@@ -125,13 +127,13 @@
         --card-container-border: 2px;
         --card-container-padding: 8px;
         --card-container-height: calc(var(--card-height) + 2 * (var(--card-container-border) + var(--card-container-padding)));
-    }
+        --card-slot-margin: 4px;
+        --table-padding: 8px;
 
-    .table {
         position: relative;
         height: 100%;
         background: darkseagreen;
-        padding: 8px;
+        padding: var(--table-padding);
         box-sizing: border-box;
 
         display: grid;
@@ -139,13 +141,15 @@
         grid-template-rows: var(--card-container-height) 1fr var(--card-container-height);
         align-items: center;
         justify-items: center;
-        column-gap: 8px;
-        row-gap: 8px;
+        column-gap: var(--table-padding);
+        row-gap: var(--table-padding);
 
         user-select: none;
         -webkit-user-select: none;
         -ms-user-select: none;
         -webkit-touch-callout: none;
+
+        overflow: hidden;
     }
 
     @media (orientation: landscape) {

@@ -1,6 +1,6 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-import Home from "./views/Home.vue";
+import Match from "./views/Match.vue";
 
 Vue.use(VueRouter);
 
@@ -8,8 +8,8 @@ export default new VueRouter({
     routes: [
         {
             path: "/",
-            name: "Home",
-            component: Home
+            name: "Match",
+            component: Match
         },
         {
             path: "/about",

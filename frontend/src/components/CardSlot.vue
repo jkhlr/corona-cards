@@ -52,12 +52,12 @@
     }
 
     .card-slot.narrow {
-        margin: 4px calc(4px + var(--card-width) / 2);
+        margin: var(--card-slot-margin) calc(var(--card-slot-margin) + var(--card-width) / 2);
         width: var(--card-width);
     }
 
     .card-slot.wide {
-        margin: 4px;
+        margin: var(--card-slot-margin);
         width: calc(2 * var(--card-width));
     }
 

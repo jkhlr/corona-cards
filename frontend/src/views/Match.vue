@@ -1,5 +1,5 @@
 <template>
-  <div class="home">
+  <div class="match">
     <Table/>
   </div>
 </template>
@@ -8,7 +8,7 @@
 import Table from "../components/Table.vue";
 
 export default {
-  name: "Home",
+  name: "Match",
   components: {
     Table
   }
@@ -16,7 +16,7 @@ export default {
 </script>
 
 <style>
-  .home {
+  .match {
     height: 100%
   }
 </style>
