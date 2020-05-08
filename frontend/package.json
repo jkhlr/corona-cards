@@ -8,6 +8,7 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
+    "socket.io-client": "^2.3.0",
     "vue": "^2.6.11",
     "vue-resize": "^0.5.0",
     "vue-router": "^3.1.5",

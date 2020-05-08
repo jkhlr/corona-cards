@@ -1,7 +1,7 @@
 import Vue from "vue";
 import Vuex from 'vuex'
-import socket from './socket'
 import {MoveCard, FlipCard} from "./shared/commands";
+import socket from './socket'
 
 Vue.use(Vuex);
 
@@ -95,7 +95,7 @@ export default new Vuex.Store({
             // TODO: don't replace config with every stateSync to prevent this getter from being executed every time.
             const cardContainerPadding = 8;
             const cardContainerBorder = 2;
-            const tablePadding = 8;
+            const gridGap = 4;
             const cardSlotMargin = 4;
             const tableWidth = state.tableSize.width;
             const tableHeight = state.tableSize.height
@@ -105,8 +105,8 @@ export default new Vuex.Store({
                 const seatHeight = cardHeight + 2 * (cardContainerBorder + cardContainerPadding)
                 const slotHeight = cardHeight + 2 * (cardContainerBorder + cardContainerPadding + cardSlotMargin)
                 const slotWidth = 2 * cardWidth + 2 * (cardContainerBorder + cardContainerPadding + cardSlotMargin)
-                const slotContainerHeight = Math.max(tableHeight - 2 * seatHeight - 4 * tablePadding, 0)
-                const slotContainerWidth = Math.max(tableWidth - 2 * seatHeight - 4 * tablePadding, 0)
+                const slotContainerHeight = Math.max(tableHeight - 2 * seatHeight - 4 * gridGap, 0)
+                const slotContainerWidth = Math.max(tableWidth - 2 * (seatHeight + gridGap), 0)
                 return Math.floor(slotContainerWidth / slotWidth) * Math.floor(slotContainerHeight / slotHeight)
             }
 
@@ -115,13 +115,11 @@ export default new Vuex.Store({
             while (tryHeight > 0 && getNumSlots(tryHeight) < numSlots) {
                 tryHeight--;
             }
-            console.log('tryHeight', tryHeight)
-
             return {height: tryHeight, width: Math.floor(tryHeight * 0.6)};
         }
     },
     mutations: {
-        syncState(state, {gameState}) {
+        updateState(state, {gameState}) {
             state.gameState = gameState;
         },
         applyCommand(state, {command}) {
@@ -143,14 +141,14 @@ export default new Vuex.Store({
             socket.emit(
                 'joinMatch',
                 {matchId, displayName},
-                ({gameState}) => commit('syncState', {gameState})
+                ({gameState}) => commit('updateState', {gameState})
             )
         },
         takeSeat({commit}, {seatNumber}) {
             socket.emit(
                 'takeSeat',
                 {seatNumber},
-                ({gameState}) => commit('syncState', {gameState})
+                ({gameState}) => commit('updateState', {gameState})
             )
         },
         startGame({commit}, {gameId}) {
@@ -161,7 +159,7 @@ export default new Vuex.Store({
                     if (error) {
                         console.error(error)
                     } else {
-                        commit('syncState', {gameState})
+                        commit('updateState', {gameState})
                     }
                 }
             )
@@ -176,7 +174,7 @@ export default new Vuex.Store({
                     if (error) {
                         console.error(error)
                     } else {
-                        commit('syncState', {gameState})
+                        commit('updateState', {gameState})
                     }
                 }
             )
@@ -191,15 +189,16 @@ export default new Vuex.Store({
                     if (error) {
                         console.error(error)
                     } else {
-                        commit('syncState', {gameState})
+                        commit('updateState', {gameState})
                     }
                 }
             )
         },
-        syncState({commit}) {
+        SOCKET_syncState({commit}) {
+            console.log('syncState received')
             socket.emit(
-                'syncState',
-                ({gameState}) => commit('syncState', {gameState})
+                'getState',
+                ({gameState}) => commit('updateState', {gameState})
             )
         }
     }

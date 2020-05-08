@@ -1,18 +1,9 @@
-import Vue from "vue";
-import VueSocketIO from 'vue-socket.io'
-import store from "./store";
+import SocketIO from "socket.io-client"
 
-const vueSocket = new VueSocketIO({
-    debug: process.env.NODE_ENV !== 'production',
-    connection: '/',
-    options: {path: "/ws/socket.io"},
-    vuex: {
-        store,
-        actionPrefix: 'SOCKET_'
+export default SocketIO(
+    '/',
+    {
+        path: "/ws/socket.io",
+        autoConnect: true
     }
-});
-
-Vue.use(vueSocket);
-
-const socket = vueSocket.io;
-export default socket
+)

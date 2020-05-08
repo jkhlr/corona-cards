@@ -7,20 +7,19 @@ const app = express();
 const server = http.createServer(app);
 const io = socketio(server, {path: '/ws/socket.io'});
 
-const matches = [new Match('default', 'skat')]
+const matches = {}
 
 io.on('connection', (socket) => {
     console.log(`Socket ${socket.id} connected`);
 
     socket.on('joinMatch', ({matchId, displayName}, reply) => {
-        console.log(`Match ${matchId} joined with name ${displayName} by ${socket.id}`)
-        let match = matches.filter(match => match.id === matchId).pop()
-        if (!match) {
+        if (!(matchId in matches)) {
             console.log(`Creating match ${matchId}...`)
-            match = new Match(matchId)
-            matches.push(match)
+            matches[matchId] = new Match(matchId)
         }
+        let match = matches[matchId]
 
+        console.log(`Match ${matchId} joined with name ${displayName} by ${socket.id}`)
         match.playerMap.addPlayer(socket.id)
         match.playerMap.updateDisplayName(socket.id, displayName)
 
@@ -51,8 +50,8 @@ io.on('connection', (socket) => {
             }
         })
 
-        socket.on('syncState', (reply) => {
-            console.log(`Game state synced by ${socket.id}`)
+        socket.on('getState', (reply) => {
+            console.log(`Game state requested by ${socket.id}`)
             reply({gameState: match.getGameStateFor(socket.id)})
         });
 
@@ -62,6 +61,10 @@ io.on('connection', (socket) => {
 
             socket.leave(matchId)
             socket.in(matchId).emit('syncState')
+
+            // if (!match.playerMap.getClientIds().length) {
+            //     delete matches[matchId]
+            // }
         });
     })
 })

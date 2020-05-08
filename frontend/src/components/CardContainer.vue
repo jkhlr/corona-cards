@@ -159,15 +159,14 @@
         mounted() {
             this.$refs.resizeObserver.compareAndNotify()
             const cards = this.$refs.cards.$el
-            this.numCardElements = cards.childElementCount
-            this.$el.addEventListener(
-                'DOMNodeInserted',
-                () => this.numCardElements = cards.childElementCount
-            )
-            this.$el.addEventListener(
-                'DOMNodeRemoved',
-                () => this.numCardElements = cards.childElementCount - 1
-            )
+            const setNumCardElements = () => {
+                const cardElements = [...cards.children].filter(
+                    el => !el.classList.contains('sortable-drag')
+                );
+                this.numCardElements = cardElements.length
+            }
+            cards.addEventListener('DOMSubtreeModified', setNumCardElements)
+            setNumCardElements()
         },
         components: {
             vueDraggable,

@@ -1,8 +1,6 @@
 <template>
     <div class="table" :style="`--card-width: ${cardSize.width}px; --card-height: ${cardSize.height}px`">
-        <div class="title">Corona Cards</div>
-        <div v-if="gameConfig.gameId" class="game-start" @click="restartGame"><span>restart</span></div>
-        <div v-else class="game-start" @click="startGame('skat')"><span>start</span></div>
+        <resize-observer ref="resizeObserver" @notify="setTableSize($event)"/>
         <card-seat
                 v-for="config in seatConfig"
                 v-bind="config"
@@ -16,13 +14,11 @@
                     :key="config.slug"
             />
         </div>
-        <resize-observer ref="resizeObserver" @notify="setTableSize($event)"/>
     </div>
 </template>
 
 <script>
-    import {mapActions, mapGetters, mapMutations, mapState} from "vuex";
-    import {randomName} from "@/names";
+    import {mapGetters, mapMutations} from "vuex";
     import CardSlot from "@/components/CardSlot";
     import CardSeat from "@/components/CardSeat";
 
@@ -34,9 +30,10 @@
                     throw new TypeError(`Invalid number of seats: ${this.numSeats}`)
                 }
 
+                const currentSeatNumber = this.currentPlayer.seatNumber
                 let seatSlugs = Object.keys(this.gameConfig).filter(key => key.startsWith('seat-'));
-                if (this.currentSeatNumber !== null) {
-                    const currentSeatSlug = `seat-${this.currentSeatNumber}`;
+                if (currentSeatNumber !== null) {
+                    const currentSeatSlug = `seat-${currentSeatNumber}`;
                     const currentSeatSlugIndex = seatSlugs.indexOf(currentSeatSlug);
                     seatSlugs = seatSlugs.slice(currentSeatSlugIndex).concat(seatSlugs.slice(0, currentSeatSlugIndex));
                 }
@@ -76,39 +73,21 @@
                 const slotSlugs = Object.keys(this.gameConfig).filter(key => key.startsWith('slot-'));
                 return slotSlugs.map(slug => ({slug}))
             },
-            currentSeatNumber() {
-                return this.$store.getters.currentPlayer.seatNumber
-            },
-            numSeats() {
-                return this.$store.getters.numSeats
-            },
             gameConfig() {
                 return this.$store.state.gameState.config || {}
             },
             ...mapGetters([
-                'cardSize'
+                'cardSize',
+                'numSeats',
+                'currentPlayer'
             ])
         },
-        methods: {
-            joinMatch({matchId, displayName}) {
-                console.log(`Joining match ${matchId} as ${displayName}.`);
-                this.$store.dispatch('joinMatch', {matchId, displayName});
-            },
-            restartGame() {
-                console.log('Restarting game.')
-                this.$store.dispatch('startGame', {gameId: this.gameConfig.gameId})
-            },
-            startGame(gameId) {
-                console.log(`Starting game: ${gameId}`)
-                this.$store.dispatch('startGame', {gameId})
-            },
-            ...mapMutations([
+        methods:
+            mapMutations([
                 'setTableSize'
-            ])
-        },
+            ]),
         mounted() {
             this.$refs.resizeObserver.compareAndNotify()
-            this.joinMatch({matchId: 'default', displayName: randomName()})
         },
         components: {
             CardSlot,
@@ -128,28 +107,26 @@
         --card-container-padding: 8px;
         --card-container-height: calc(var(--card-height) + 2 * (var(--card-container-border) + var(--card-container-padding)));
         --card-slot-margin: 4px;
-        --table-padding: 8px;
+        --grid-gap: 4px;
 
         position: relative;
-        height: 100%;
         background: darkseagreen;
-        padding: var(--table-padding);
         box-sizing: border-box;
+        height: 100%;
+        padding: var(--grid-gap) 0;
 
         display: grid;
         grid-template-columns: var(--card-container-height) 1fr var(--card-container-height);
         grid-template-rows: var(--card-container-height) 1fr var(--card-container-height);
         align-items: center;
         justify-items: center;
-        column-gap: var(--table-padding);
-        row-gap: var(--table-padding);
+        column-gap: var(--grid-gap);
+        row-gap: var(--grid-gap);
 
         user-select: none;
         -webkit-user-select: none;
         -ms-user-select: none;
         -webkit-touch-callout: none;
-
-        overflow: hidden;
     }
 
     @media (orientation: landscape) {
@@ -188,22 +165,5 @@
         align-content: center;
         width: 100%;
         height: 100%;
-    }
-
-    .game-start {
-        cursor: pointer;
-        position: absolute;
-        height: 2em;
-        width: 10em;
-        top: calc(var(--card-container-height) / 2 + 1.5em);
-        left: calc(50% - 5em);
-        text-align: center;
-    }
-
-    .title {
-        font-weight: bold;
-        font-size: xx-large;
-        grid-area: top;
-        margin-top: -1em;
     }
 </style>

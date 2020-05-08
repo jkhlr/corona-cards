@@ -2,7 +2,7 @@ import Vue from "vue";
 import App from "./App.vue";
 import router from "./router";
 import store from "./store";
-import "./socket"
+import "./vue-socket"
 import "./resize"
 
 Vue.config.productionTip = false;

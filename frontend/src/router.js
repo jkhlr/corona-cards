@@ -7,9 +7,11 @@ Vue.use(VueRouter);
 export default new VueRouter({
     routes: [
         {
-            path: "/",
+            path: "/match/:matchId?",
             name: "Match",
-            component: Match
+            component: Match,
+            props: true,
+            alias: "/"
         },
         {
             path: "/about",
