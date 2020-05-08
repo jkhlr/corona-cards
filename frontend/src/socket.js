@@ -4,6 +4,6 @@ export default SocketIO(
     '/',
     {
         path: "/ws/socket.io",
-        autoConnect: true
+        autoConnect: false
     }
 )

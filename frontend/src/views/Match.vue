@@ -19,9 +19,7 @@
             <div class="menu">
                 <div @click="startGame('skat')">PLAY!</div>
             </div>
-
         </div>
-
     </div>
 </template>
 
@@ -34,7 +32,7 @@
         data() {
             return {
                 displayName: randomName(),
-                showTable: true
+                showTable: false
             }
         },
         props: {
@@ -59,6 +57,9 @@
             },
         },
         mounted() {
+            if (!this.$socket.connected) {
+                this.$socket.connect()
+            }
             this.joinMatch()
         },
         components: {
