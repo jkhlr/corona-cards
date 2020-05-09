@@ -12,10 +12,10 @@
             <div class="filler"/>
         </div>
 
-        <div v-if="showTable" class="content-wrapper table-wrapper">
+        <div v-show="showTable" class="content-wrapper table-wrapper">
             <Table/>
         </div>
-        <div v-else class="content-wrapper">
+        <div v-show="!showTable" class="content-wrapper">
             <div class="menu">
                 <div @click="startGame('skat')">PLAY!</div>
             </div>
